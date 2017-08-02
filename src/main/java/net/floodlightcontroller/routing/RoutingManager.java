@@ -97,6 +97,11 @@ public class RoutingManager implements IFloodlightModule, IRoutingService {
     public Path getPath(DatapathId src, DatapathId dst) {
         return tm.getCurrentTopologyInstance().getPath(src, dst);
     }
+    
+    @Override
+    public Path getPath(DatapathId src, DatapathId dst, PATH_METRIC pm) {
+        return tm.getCurrentTopologyInstance().getPath(src, dst, pm);
+    }
 
     @Override
     public Path getPath(DatapathId src, OFPort srcPort, DatapathId dst, OFPort dstPort) {

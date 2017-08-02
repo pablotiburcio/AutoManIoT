@@ -20,6 +20,7 @@ import net.floodlightcontroller.core.IOFSwitch;
 import net.floodlightcontroller.core.types.NodePortTuple;
 import net.floodlightcontroller.linkdiscovery.Link;
 import net.floodlightcontroller.routing.BroadcastTree;
+import net.floodlightcontroller.routing.IRoutingService.PATH_METRIC;
 import net.floodlightcontroller.routing.Path;
 import net.floodlightcontroller.routing.PathId;
 import net.floodlightcontroller.statistics.SwitchPortBandwidth;
@@ -645,11 +646,18 @@ public class TopologyInstance {
     /*
      * Creates a map of links and the cost associated with each link
      */
-    public Map<Link,Integer> initLinkCostMap() {
+    public Map<Link,Integer> initLinkCostMap(PATH_METRIC pm) {
         Map<Link, Integer> linkCost = new HashMap<Link, Integer>();
         int tunnel_weight = portsWithLinks.size() + 1;
-
-        switch (TopologyManager.getPathMetricInternal()){
+        
+        // Adicionado para permitir um novo calculo de rota sem mudar a metrica de calculo de rota global PATH_METRIC
+        PATH_METRIC pmFinal;
+        if (pm==null)
+        	pmFinal = TopologyManager.getPathMetricInternal();
+        else
+        	pmFinal = pm;
+        
+        switch (pmFinal){
         case HOPCOUNT_AVOID_TUNNELS:
             log.debug("Using hop count with tunnel bias for metrics");
             for (NodePortTuple npt : portsTunnel) {
@@ -789,7 +797,7 @@ public class TopologyInstance {
                 for (DatapathId dst : dstSws) {
                     log.debug("Calling Yens {} {}", src, dst);
                     paths = yens(src, dst, TopologyManager.getMaxPathsToComputeInternal(),
-                            getArchipelago(src), getArchipelago(dst));
+                            getArchipelago(src), getArchipelago(dst), null);
                     pathId = new PathId(src, dst);
                     pathcache.put(pathId, paths);
                     log.debug("Adding paths {}", paths);
@@ -932,7 +940,7 @@ public class TopologyInstance {
         if (paths == null || k < 1) return ImmutableList.of();
 
         if (k >= TopologyManager.getMaxPathsToComputeInternal() || k >= paths.size()) {
-            return yens(src, dst, k, getArchipelago(src), getArchipelago(dst)); /* heavy computation */
+            return yens(src, dst, k, getArchipelago(src), getArchipelago(dst), null); /* heavy computation */
         }
         else {
             return new ArrayList<Path>(paths.subList(0, k));
@@ -974,14 +982,14 @@ public class TopologyInstance {
 
     }
 
-    private List<Path> yens(DatapathId src, DatapathId dst, Integer K, Archipelago aSrc, Archipelago aDst) {
+    private List<Path> yens(DatapathId src, DatapathId dst, Integer K, Archipelago aSrc, Archipelago aDst, PATH_METRIC pm) {
 
         log.debug("YENS ALGORITHM -----------------");
         log.debug("Asking for paths from {} to {}", src, dst);
         log.debug("Asking for {} paths", K);
 
         // Find link costs
-        Map<Link, Integer> linkCost = initLinkCostMap();
+        Map<Link, Integer> linkCost = initLinkCostMap(pm);
 
         Map<DatapathId, Set<Link>> linkDpidMap = buildLinkDpidMap(switches, portsWithLinks, links);
 
@@ -1239,6 +1247,26 @@ public class TopologyInstance {
             log.trace("getPath: {} -> {}", id, result);
         }
         return result == null ? new Path(id, ImmutableList.of()) : result;
+    }
+    
+    /**
+     * Get the fastest path from the pathcache by path metric.
+     * @param srcId
+     * @param dstId
+     * @param pm
+     * @return fastPath by pm
+     */
+    public Path getPath(DatapathId srcId, DatapathId dstId, PATH_METRIC pm) {
+    	PathId pathId = new PathId(srcId, dstId);
+        List<Path> paths = pathcache.get(pathId);
+
+        if (paths == null) return new Path(pathId, ImmutableList.of());
+        
+        return yens(srcId, dstId, 1, getArchipelago(srcId), getArchipelago(dstId), pm).get(0); /* heavy computation */
+        //}
+        //else {
+        //    return new ArrayList<Path>(paths.subList(0, k));
+        //}
     }
 
     //

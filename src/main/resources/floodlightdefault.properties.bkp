@@ -18,7 +18,9 @@ net.floodlightcontroller.simpleft.FT,\
 net.floodlightcontroller.devicemanager.internal.DeviceManagerImpl,\
 net.floodlightcontroller.accesscontrollist.ACL,\
 net.floodlightcontroller.statistics.StatisticsCollector,\
-net.floodlightcontroller.mactracker.MACTracker
+net.floodlightcontroller.mactracker.MACTracker,\
+net.floodlightcontroller.automaniot.AppReqPusher,\
+net.floodlightcontroller.automaniot.AutoManIoT
 org.sdnplatform.sync.internal.SyncManager.authScheme=CHALLENGE_RESPONSE
 org.sdnplatform.sync.internal.SyncManager.keyStorePath=/etc/floodlight/key2.jceks
 org.sdnplatform.sync.internal.SyncManager.dbPath=/var/lib/floodlight/
@@ -38,7 +40,7 @@ net.floodlightcontroller.forwarding.Forwarding.set-send-flow-rem-flag=FALSE
 net.floodlightcontroller.forwarding.Forwarding.remove-flows-on-link-or-port-down=TRUE
 net.floodlightcontroller.core.internal.FloodlightProvider.role=ACTIVE
 net.floodlightcontroller.core.internal.FloodlightProvider.controllerId=1
-net.floodlightcontroller.linkdiscovery.internal.LinkDiscoveryManager.latency-history-size=1
+net.floodlightcontroller.linkdiscovery.internal.LinkDiscoveryManager.latency-history-size=10
 net.floodlightcontroller.linkdiscovery.internal.LinkDiscoveryManager.latency-update-threshold=0.5
 net.floodlightcontroller.core.internal.FloodlightProvider.shutdownOnTransitionToStandby=true
 net.floodlightcontroller.core.internal.OFSwitchManager.openFlowPort=6653
@@ -66,5 +68,5 @@ net.floodlightcontroller.restserver.RestApiServer.httpPort=8080
 net.floodlightcontroller.restserver.RestApiServer.accessControlAllowAllOrigins=TRUE
 net.floodlightcontroller.statistics.StatisticsCollector.enable=FALSE
 net.floodlightcontroller.statistics.StatisticsCollector.collectionIntervalPortStatsSeconds=10
-net.floodlightcontroller.topology.TopologyManager.pathMetric=hopcount
+net.floodlightcontroller.topology.TopologyManager.pathMetric=latency
 net.floodlightcontroller.topology.TopologyManager.maxPathsToCompute=3

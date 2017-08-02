@@ -17,6 +17,11 @@
 			<name>Sonatype OSS snapshot repository</name>
 			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
 		</repository>
+		<repository>
+        	<id>Eclipse Paho Repo</id>
+        	<name>Eclipse Paho</name>
+        	<url>https://repo.eclipse.org/content/repositories/paho-releases/</url>
+    	</repository>
 	</repositories>
 	<build>
 		<plugins>
@@ -267,6 +272,11 @@
 			<artifactId>jackson-dataformat-cbor</artifactId>
 			<version>${lib-jackson-version}</version>
 		</dependency>
+		<dependency>
+        	<groupId>org.eclipse.paho</groupId>
+        	<artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+        	<version>1.1.1</version>
+    	</dependency>
 	</dependencies>
 	<properties>
 		<lib-restlet-version>2.3.2</lib-restlet-version>

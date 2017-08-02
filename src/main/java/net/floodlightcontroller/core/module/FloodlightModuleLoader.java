@@ -311,7 +311,7 @@ public class FloodlightModuleLoader {
         IFloodlightModule module = moduleNameMap.get(moduleName);
         if (module == null) {
             throw new FloodlightModuleException("Module " +
-                    moduleName + " not found");
+                    moduleName + " not found ");
         }
 
         // Add its dependencies to the stack

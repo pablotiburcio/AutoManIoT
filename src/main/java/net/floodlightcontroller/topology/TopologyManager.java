@@ -476,7 +476,7 @@ ITopologyManagerBackend, ILinkDiscoveryListener, IOFMessageListener {
 
     public Map<Link, Integer> getLinkCostMap() {
         TopologyInstance ti = getCurrentInstance();
-        return ti.initLinkCostMap();
+        return ti.initLinkCostMap(null);
     }
 
     // ******************

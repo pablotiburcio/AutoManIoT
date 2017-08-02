@@ -116,6 +116,15 @@ public interface IRoutingService extends IFloodlightService {
      * @return the lowest cost path
      */
     public Path getPath(DatapathId src, DatapathId dst);
+    
+    /** @author PabloTiburcio
+     * Provides a path between srcPort on src and dstPort on dst with the pm metric.
+     * @param src source switch
+     * @param dst destination switch
+     * @param pm Path Metric
+     * @return the lowest cost path determined by pm
+     */
+    public Path getPath(DatapathId src, DatapathId dst, PATH_METRIC pm);
 
     /**
      * Provides a path between srcPort on src and dstPort on dst.

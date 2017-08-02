@@ -43,7 +43,7 @@ public class ListStaticEntriesResource extends ServerResource {
         if (log.isDebugEnabled())
             log.debug("Listing all static flow/group entires for switch: " + param);
         
-        if (param.toLowerCase().equals("all")) {
+        if (param.toLowerCase().equals("all")) { 
             return new SFPEntryMap(sfpService.getEntries());
         } else {
             try {
