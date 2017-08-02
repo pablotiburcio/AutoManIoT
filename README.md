@@ -8,4 +8,4 @@ It uses SDN and NFV as implantation infrastructure.
 
 *Testbed are executed in the Mininet Emulator; 
 
-*Message from Devices (MTC or MTM) uses MQTT protocol; 
+*Message from Devices (MTC or M2M) uses MQTT protocol; 
