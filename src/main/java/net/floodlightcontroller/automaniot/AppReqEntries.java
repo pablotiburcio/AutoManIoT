@@ -107,7 +107,7 @@ public class AppReqEntries {
 		entry.put(AppReqPusher.Columns.COLUMN_SOURCE_ID, appReq.getSrcId().toString());
 		entry.put(AppReqPusher.Columns.COLUMN_DESTINATION_ID, appReq.getDstId().toString());
 		entry.put(AppReqPusher.Columns.COLUMN_SOURCE_PORT, appReq.getSrcPort().toString());
-		entry.put(AppReqPusher.Columns.COLUMN_DESTINATION_PORT, appReq.getDstPort().toString());
+		entry.put(AppReqPusher.Columns.COLUMN_DESTINATION_PORT,  appReq.getDstPort().toString());
 		entry.put(AppReqPusher.Columns.COLUMN_MIN, Integer.toString(appReq.getMin()));
 		entry.put(AppReqPusher.Columns.COLUMN_MAX, Integer.toString(appReq.getMax()));
 		entry.put(AppReqPusher.Columns.COLUMN_ADAPTATION_RATE_TYPE, Integer.toString(appReq.getAdaptionRateType()));

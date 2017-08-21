@@ -17,6 +17,7 @@
 package net.floodlightcontroller.automaniot;
 
 import java.util.Map;
+import java.util.Set;
 
 import net.floodlightcontroller.core.module.IFloodlightService;
 
@@ -46,6 +47,9 @@ public interface IAppReqPusherService extends IFloodlightService {
 
 
 	public AppReq getAppReq(String reqId);
+	
+	
+	public Set<String> getAllTopics();
 
 
 	void addAppReq(String name, AppReq appReq);

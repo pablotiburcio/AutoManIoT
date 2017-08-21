@@ -15,7 +15,8 @@ public class AppReq {
 		this.name = name;
 	}
 
-
+	//zero to bypass the values
+	//""- empty to bypass the values
 	private IPv4Address srcIP, dstIP;
 	private DatapathId srcId, dstId;
 	private TransportPort srcPort, dstPort;
@@ -115,7 +116,7 @@ public class AppReq {
 	@Override
 	public String toString(){
 		String toReturn;
-	
+
 		toReturn = this.srcIP == null ? "" : this.srcIP.toString()+" "; 
 		toReturn = toReturn+= this.srcPort == null ? "" : this.srcPort.toString()+" ";
 		toReturn = toReturn+= this.dstIP == null ? "" : this.dstIP.toString()+" ";

@@ -95,6 +95,8 @@ import net.floodlightcontroller.util.OFMessageUtils;
 public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageListener, IOFSwitchListener, ILinkDiscoveryListener  {
 	protected static Logger log = LoggerFactory.getLogger(IoTRouting.class);
 
+	public static final String MODULE_NAME = "iotrouting";
+	
     protected IFloodlightProviderService floodlightProviderService;
     protected IOFSwitchService switchService;
     protected IDeviceService deviceManagerService;
@@ -102,6 +104,8 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
     protected ITopologyService topologyService;
     protected IDebugCounterService debugCounterService;
     protected ILinkDiscoveryService linkService;
+	protected IAppReqPusherService appReqService;
+
     
     // flow-mod - for use in the cookie
     public static final int FORWARDING_APP_ID = 2;
@@ -891,15 +895,29 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
         	
         	Match.Builder mb = sw.getOFFactory().buildMatch();
         	mb.setExact(MatchField.IN_PORT, inPort);
-        	mb.setExact(MatchField.IPV4_SRC, appReq.getSrcIP());
-        	mb.setExact(MatchField.IPV4_DST, appReq.getDstIP());
+        	
+        	if (!appReq.getSrcIP().equals(IPv4Address.of("0.0.0.0"))){ 
+        		mb.setExact(MatchField.IPV4_SRC, appReq.getSrcIP());
+        	}
+        	if (!appReq.getDstIP().equals(IPv4Address.of("0.0.0.0"))) 
+        		mb.setExact(MatchField.IPV4_DST, appReq.getDstIP());
+        	
+        	
+        	
         	if (protocol == "ip"){ //TODO: put it in an organized way
             	
         		mb.setExact(MatchField.ETH_TYPE, EthType.IPv4);
         		mb.setExact(MatchField.IP_PROTO, IpProtocol.TCP);
+        		
+        		if(!appReq.getSrcPort().equals(TransportPort.of(0)))
+        			mb.setExact(MatchField.TCP_SRC, appReq.getSrcPort());
+        		
+        		if(!appReq.getDstPort().equals(TransportPort.of(0)))
+        			mb.setExact(MatchField.TCP_DST, appReq.getDstPort());
+        		
         	} else if (protocol == "arp"){
         		mb.setExact(MatchField.ETH_TYPE, EthType.ARP);
-        		mb.setExact(MatchField.TCP_DST, appReq.getDstPort());
+        		
         	}
         	return mb.build();
         
@@ -913,14 +931,28 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
         	
         	Match.Builder mb = sw.getOFFactory().buildMatch();
         	mb.setExact(MatchField.IN_PORT, inPort);
-        	mb.setExact(MatchField.IPV4_SRC, appReq.getDstIP());
-        	mb.setExact(MatchField.IPV4_DST, appReq.getSrcIP());
+        	
+        	if (!appReq.getSrcIP().equals(IPv4Address.of("0.0.0.0"))) 
+        		mb.setExact(MatchField.IPV4_DST, appReq.getSrcIP());
+        	
+        	if (!appReq.getDstIP().equals(IPv4Address.of("0.0.0.0"))) 
+        		mb.setExact(MatchField.IPV4_SRC, appReq.getDstIP());
+        	
+        	
         	if (protocol == "ip"){ //TODO: put it in an organized way
-            	mb.setExact(MatchField.ETH_TYPE, EthType.IPv4);
-            	mb.setExact(MatchField.IP_PROTO, IpProtocol.TCP);
-            	mb.setExact(MatchField.TCP_DST, appReq.getDstPort());
+            	
+        		mb.setExact(MatchField.ETH_TYPE, EthType.IPv4);
+        		mb.setExact(MatchField.IP_PROTO, IpProtocol.TCP);
+        		
+        		if(!appReq.getSrcPort().equals(TransportPort.of(0)))
+        			mb.setExact(MatchField.TCP_DST, appReq.getSrcPort());
+        		
+        		if(!appReq.getDstPort().equals(TransportPort.of(0)))
+        			mb.setExact(MatchField.TCP_SRC, appReq.getDstPort());
+        		
         	} else if (protocol == "arp"){
         		mb.setExact(MatchField.ETH_TYPE, EthType.ARP);
+        		
         	}
         	return mb.build();
         
@@ -1157,6 +1189,8 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
             this.debugCounterService = context.getServiceImpl(IDebugCounterService.class);
             this.switchService = context.getServiceImpl(IOFSwitchService.class);
             this.linkService = context.getServiceImpl(ILinkDiscoveryService.class);
+    		this.appReqService = context.getServiceImpl(IAppReqPusherService.class);
+
 
             flowSetIdRegistry = FlowSetIdRegistry.getInstance();
         }
@@ -1181,7 +1215,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 				FloodlightContext cntx) {
 
 			Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
-			
+			//log.info(eth.toString());
 			
 			if (MqttUtils.isMqttMessage(eth)){
 				IPv4 ipv4 = (IPv4) eth.getPayload();
@@ -1197,11 +1231,21 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 						//mqttMessageType = m_results.get(0);
 						log.info("byte type {}", mdecoder.getMessageType());
 						switch (mdecoder.getMessageType()){
+						//TODO: Logic from Lazy Method
 						case AbstractMessage.PUBLISH : 
 							PublishMessage mPublish = (PublishMessage) m_results.get(0);
 							mqttMessageType = mPublish;
 							mqttMessageType.getMessageType();
+							String topic = mPublish.getTopicName();
+							Set<String> topics = appReqService.getAllTopics();
+							
+							if (topics.contains(topic)){
+								
+							} //Se nao ha o topico na lista, prosseguir encaminhamento convencional
+
 							log.info("Mqtt Topic Publish {}", mPublish.getTopicName());
+							log.info("Mqtt All Topics {}",appReqService.getAllTopics());
+							
 							break;
 						case AbstractMessage.SUBSCRIBE : 
 							SubscribeMessage mSubscribe = (SubscribeMessage) m_results.get(0);
@@ -1216,6 +1260,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 							log.info("Mqtt Topic UnsubAck {}", mUnsuback.toString());
 							break;
 						}
+						
 					}
 				} catch (Exception e) {
 					// TODO Auto-generated catch block

@@ -2,6 +2,7 @@ package net.floodlightcontroller.automaniot;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -12,6 +13,9 @@ import org.projectfloodlight.openflow.protocol.OFPortDesc;
 import org.projectfloodlight.openflow.protocol.OFType;
 import org.projectfloodlight.openflow.protocol.match.Match;
 import org.projectfloodlight.openflow.types.DatapathId;
+import org.projectfloodlight.openflow.types.IPv4Address;
+import org.projectfloodlight.openflow.types.IPv6Address;
+import org.projectfloodlight.openflow.types.MacAddress;
 import org.projectfloodlight.openflow.types.OFPort;
 import org.projectfloodlight.openflow.types.U64;
 
@@ -32,7 +36,10 @@ import net.floodlightcontroller.core.module.FloodlightModuleContext;
 import net.floodlightcontroller.core.module.FloodlightModuleException;
 import net.floodlightcontroller.core.module.IFloodlightModule;
 import net.floodlightcontroller.core.module.IFloodlightService;
+import net.floodlightcontroller.devicemanager.IDevice;
 import net.floodlightcontroller.devicemanager.IDeviceService;
+import net.floodlightcontroller.devicemanager.SwitchPort;
+import net.floodlightcontroller.devicemanager.internal.Device;
 import net.floodlightcontroller.linkdiscovery.ILinkDiscoveryService;
 import net.floodlightcontroller.core.IFloodlightProviderService;
 
@@ -108,6 +115,14 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 			//deviceService.queryDevices(null, null, appReq.getSrcIP(), null, null, null);
 			//problemas: todos hosts tem que dar um ping na rede para o floodlight cadastrar seu IP
 			//Isso altera as regras aplicadas aos roteadores (verificar)
+			
+			Iterator<? extends IDevice> devIter = deviceService.queryDevices(MacAddress.NONE, null, appReq.getSrcIP(), IPv6Address.NONE, DatapathId.NONE, OFPort.ZERO);
+			if(devIter.hasNext()){
+				SwitchPort[] switches = devIter.next().getAttachmentPoints();
+				for (SwitchPort sw : switches) {} //TODO: Take only one attached switch - find a best/efficient way to take one
+			} 
+			
+			
 			
 			Path p = routingService.getPath(appReq.getSrcId(), appReq.getDstId());
 			Path pinout = routingService.getPath(appReq.getSrcId(), OFPort.ofInt(1), appReq.getDstId(), OFPort.ofInt(1));
@@ -192,22 +207,14 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	    	if (appReq.getAdaptionRateType()==1){ //continuous
 		    	//Execute Delay Monitor at each X sec from timeout in ReqTable
 		    	scheduledFutureMap.put(name, threadPool.scheduleAtFixedRate(new ContinuousDelayMonitor(appReq), 0, appReq.getTimeout(), TimeUnit.SECONDS));
-		    	/*Thread t=null;
-				try {
-					t = (Thread) scheduledFutureMap.get(name).get();
-				} catch (InterruptedException | ExecutionException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-		    	t.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler(){
-					@Override
-					public void uncaughtException(Thread t, Throwable e) {
-		    			log.info(t + " throws exception; "+ e);
-						
-					}
-		    	});
+//		    	try {
+//					scheduledFutureMap.get(name).get();
+//				} catch (InterruptedException | ExecutionException e) {
+//					// TODO Auto-generated catch block
+//					log.info("thread error:");
+//					e.printStackTrace();
+//				}
 		    
-		    	*/
 	    	} else if (appReq.getAdaptionRateType()==2){ //lazy
 	    		scheduledFutureMap.put(name, threadPool.scheduleAtFixedRate(new LazyDelayMonitor(appReq), 0, appReq.getTimeout(), TimeUnit.SECONDS));
 	    	}
@@ -291,8 +298,6 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 		storageSourceService = context.getServiceImpl(IStorageSourceService.class);
     	threadPool = new ScheduledThreadPoolExecutor(1);
     	scheduledFutureMap = new HashMap<String, ScheduledFuture<?>>();
-    	//iotRouting = new IoTRouting(); //quando transformar em modulo pegar o contexto
-    	//iotRouting.init();
 	}
 
 	@Override
@@ -309,14 +314,23 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	    IPv4 ipv4 = new IPv4();
 	    ipv4.setSourceAddress("10.0.0.1");
 	    ipv4.setDestinationAddress("10.0.0.3");
+	    
+	    //ipv4.setSourceAddress("10.0.0.5");
+	    //ipv4.setDestinationAddress("10.0.0.6");
 	    TCP tcp = new TCP();
-	    //tcp.setSourcePort(1);
-	    tcp.setDestinationPort(1883);
+	    tcp.setSourcePort(1883);
+	    tcp.setDestinationPort(0);
 	    //Insert a AppReq with continuous adaptation rate - null to dispense
-	    AppReq ar = new AppReq("test", "healthcare", ipv4.getSourceAddress(), ipv4.getDestinationAddress(), DatapathId.of(1L), DatapathId.of(3L), null, tcp.getDestinationPort(), 1, 5, 1, 10);
+	    AppReq ar = new AppReq("test", "healthcare", ipv4.getSourceAddress(), ipv4.getDestinationAddress(), DatapathId.of(1L), DatapathId.of(3L), tcp.getSourcePort(), tcp.getDestinationPort(), 1, 5, 1, 10);
 	    log.info(ar.toString());
 	    appReqMap.put(ar.getName(), ar);
 		appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
+		
+		//ar = new AppReq("test1", "transport", ipv4.getSourceAddress(), ipv4.getDestinationAddress(), DatapathId.of(1L), DatapathId.of(3L), tcp.getSourcePort(), tcp.getDestinationPort(), 1, 5, 1, 20);
+	    //log.info(ar.toString());
+	    //appReqMap.put(ar.getName(), ar);
+		//s	appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
+		
 		
 	    
 	}

@@ -35,7 +35,7 @@ import net.floodlightcontroller.storage.IStorageSourceService;
 import net.floodlightcontroller.storage.StorageException;
 
 public class AppReqPusher
-implements IFloodlightModule, IStorageSourceListener, IOFMessageListener, IAppReqPusherService {
+implements IFloodlightModule, IStorageSourceListener, IAppReqPusherService {
 	protected static Logger log = LoggerFactory.getLogger(AppReqPusher.class);
 	public static final String MODULE_NAME = "appreqpusher";
 
@@ -110,6 +110,15 @@ implements IFloodlightModule, IStorageSourceListener, IOFMessageListener, IAppRe
 		appReqFromStorage = readAppReqFromStorage();
 		AppReq m = appReqFromStorage.get(reqId);
 		return m;
+	}
+	
+	public Set<String> getAllTopics(){
+		//appReqFromStorage;
+		Set<String> topics = new HashSet<String>();
+		for (AppReq appReq : appReqFromStorage.values()) {
+			topics.add(appReq.getTopic());
+		}
+		return topics;
 	}
 
 	@Override
@@ -218,51 +227,20 @@ implements IFloodlightModule, IStorageSourceListener, IOFMessageListener, IAppRe
 		switchService = context.getServiceImpl(IOFSwitchService.class);
 		storageSourceService = context.getServiceImpl(IStorageSourceService.class);
 		restApiService = context.getServiceImpl(IRestApiService.class);
-		//haListener = new HAListenerDelegate();
 		
 	}
 
 	@Override
 	public void startUp(FloodlightModuleContext context) throws FloodlightModuleException {
 		log.info("Starting AppReqPusher...");
-		floodlightProviderService.addOFMessageListener(OFType.FLOW_REMOVED, this);
-		//switchService.addOFSwitchListener(this);
-		//floodlightProviderService.addHAListener(this.haListener);
-		// assumes no switches connected at startup()
+		//floodlightProviderService.addOFMessageListener(OFType.FLOW_REMOVED, this);
 		storageSourceService.createTable(TABLE_NAME, null);
 		storageSourceService.setTablePrimaryKeyName(TABLE_NAME, Columns.COLUMN_NAME);
 		storageSourceService.addListener(TABLE_NAME, this);
 		appReqFromStorage = readAppReqFromStorage();
-		//entry2dpid = computeEntry2DpidMap(entriesFromStorage);
 		restApiService.addRestletRoutable(new RoutableAppReq()); /* current */
 		
 	}
-
-	@Override
-	public String getName() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public boolean isCallbackOrderingPrereq(OFType type, String name) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public boolean isCallbackOrderingPostreq(OFType type, String name) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public net.floodlightcontroller.core.IListener.Command receive(IOFSwitch sw, OFMessage msg,
-			FloodlightContext cntx) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 
 	@Override
 	public void rowsModified(String tableName, Set<Object> rowKeys) {
