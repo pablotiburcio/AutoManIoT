@@ -135,8 +135,9 @@ public class AppReq {
 	@Override
 	public String toString(){
 		String toReturn;
-
-		toReturn = this.srcIP == null ? "" : this.srcIP.toString()+" "; 
+		toReturn = this.name + " ";
+		toReturn = toReturn+= this.srcIP == null ? "" : this.srcIP.toString()+" "; 
+		toReturn = toReturn+= this.name + " "; 
 		toReturn = toReturn+= this.srcTransPort == null ? "" : this.srcTransPort.toString()+" ";
 		toReturn = toReturn+= this.dstIP == null ? "" : this.dstIP.toString()+" ";
 		toReturn = toReturn+= this.dstTransPort == null ? "" : this.dstTransPort.toString()+ " "; 

@@ -131,8 +131,12 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 			
 			//Path originalPath = routingService.getPath(srcSwitch.getNodeId(), srcSwitch.getPortId(), dstSwitch.getNodeId(), dstSwitch.getPortId());
 			Path originalPath = routingService.getPath(appReq.getSrcId(), appReq.getSrcPort(), appReq.getDstId(), appReq.getDstPort());
+			log.info("Path Atual fora do IF {}", originalPath);
+			log.info("appReq {}", appReq.toString());
 
+			
 			U64 originalLatency = originalPath.getLatency();
+			log.info("originalLatency {}", originalLatency);
 			
 			if (originalLatency != null){
 				if (originalLatency.getValue() > appReq.getMax()){
@@ -332,7 +336,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	    tcp.setSourcePort(1883);
 	    tcp.setDestinationPort(0);
 	    //Insert a AppReq with continuous adaptation rate - null to dispense
-	    AppReq ar = new AppReq("aloha", "medical", ipv4.getSourceAddress(), ipv4.getDestinationAddress(), DatapathId.of(1L), DatapathId.of(3L),
+	    AppReq ar = new AppReq("aloha", "medical", ipv4.getSourceAddress(), ipv4.getDestinationAddress(), DatapathId.of(5L), DatapathId.of(6L),
 	    		OFPort.of(1), OFPort.of(1), tcp.getSourcePort(), tcp.getDestinationPort(), 1, 5, 1, 10);
 	    log.info(ar.toString());
 		appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);

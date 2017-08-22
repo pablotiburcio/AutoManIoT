@@ -1273,15 +1273,16 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 									} //TODO: Take only one attached switch - find a best/efficient way to take it
 								} 
 								
-								
-								AppReq appReq = new AppReq(topic+appReqService.updateIndex(), topic, 
+								//TODO: Verificar se nao encontrou valores/switches
+								//AppReq appReq = new AppReq(topic+appReqService.updateIndex(), topic, 
+								AppReq appReq = new AppReq(topic, topic, 
 										ipv4.getSourceAddress(), ipv4.getDestinationAddress(),
 										srcSwitch.getNodeId(), dstSwitch.getNodeId(), 
 										srcSwitch.getPortId(), dstSwitch.getPortId(),
 										tcp.getSourcePort(), tcp.getDestinationPort(), 
 										topicReq.getMin(), topicReq.getMax(), 1, topicReq.getTimeout());
 								
-							    log.info(appReq.toString());
+							    log.info("Inserido este appReq no IoTRouting {}", appReq.toString());
 								appReqService.addAppReq(AppReqPusher.TABLE_NAME, appReq);
 								
 							} //Se nao ha o topico na lista, prosseguir encaminhamento convencional
