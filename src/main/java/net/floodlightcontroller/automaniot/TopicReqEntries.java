@@ -12,11 +12,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 
-import net.floodlightcontroller.staticentry.StaticEntryPusher;
-
-
-public class AppReqEntries {
-	protected static Logger log = LoggerFactory.getLogger(AppReqEntries.class);
+public class TopicReqEntries {
+	protected static Logger log = LoggerFactory.getLogger(TopicReqEntries.class);
 	public static String getEntryNameFromJson(String fmJson) throws IOException{
 		MappingJsonFactory f = new MappingJsonFactory();
 		JsonParser jp;
@@ -42,27 +39,22 @@ public class AppReqEntries {
 			if (jp.getText().equals("")) 
 				continue;
 
-			if (n == AppReqPusher.Columns.COLUMN_NAME)
+			if (n == TopicReqPusher.Columns.COLUMN_TOPIC)
 				return jp.getText();
 		}
 		return null;
 	}
 	
 	/**
-	 * Turns a JSON formatted App Requisites string into a storage entry
+	 * Turns a JSON formatted TOPIC Requisites string into a storage entry
 	 * Expects a string in JSON along the lines of:
 	 *        {
-	 *            "name":         "appReqHealthcare",
 	 *            "topic":        "healthcare",        
-	 *            "ip_src":       "192.168...",
-	 *            "ip_dst":       "192.168...",
-	 *            "src_port":	  "80",
-	 *            "dst_port":     "80",
 	 *            "min":          "80",
 	 *            "max":          "80",
 	 *            "time_out":     "80",
 	 *        }
-	 * @param fmJson The JSON formatted AppReq entry
+	 * @param fmJson The JSON formatted TopicReq entry
 	 * @return The map of the storage entry
 	 * @throws IOException If there was an error parsing the JSON
 	 */
@@ -97,25 +89,14 @@ public class AppReqEntries {
 
 		return entry;
 	} 
-	//Update in core.web.serializers
-	public static Map<String, Object> appReqToStorageEntry(AppReq appReq){
+	
+	public static Map<String, Object> topicReqToStorageEntry(TopicReq topicReq){
 		Map<String, Object> entry = new HashMap<String, Object>();
-		entry.put(AppReqPusher.Columns.COLUMN_NAME, appReq.getName());
-		entry.put(AppReqPusher.Columns.COLUMN_TOPIC, appReq.getTopic());
-		entry.put(AppReqPusher.Columns.COLUMN_SOURCE_IP, appReq.getSrcIP().toString());
-		entry.put(AppReqPusher.Columns.COLUMN_DESTINATION_IP, appReq.getDstIP().toString());
-		entry.put(AppReqPusher.Columns.COLUMN_SOURCE_ID, appReq.getSrcId().toString());
-		entry.put(AppReqPusher.Columns.COLUMN_DESTINATION_ID, appReq.getDstId().toString());
-		entry.put(AppReqPusher.Columns.COLUMN_SOURCE_PORT, appReq.getSrcPort().toString());
-		entry.put(AppReqPusher.Columns.COLUMN_DESTINATION_PORT,  appReq.getDstPort().toString());
-		entry.put(AppReqPusher.Columns.COLUMN_SOURCE_TRANSPORT_PORT, appReq.getSrcTransPort().toString());
-		entry.put(AppReqPusher.Columns.COLUMN_DESTINATION_TRANSPORT_PORT,  appReq.getDstTransPort().toString());		
-		entry.put(AppReqPusher.Columns.COLUMN_MIN, Integer.toString(appReq.getMin()));
-		entry.put(AppReqPusher.Columns.COLUMN_MAX, Integer.toString(appReq.getMax()));
-		entry.put(AppReqPusher.Columns.COLUMN_ADAPTATION_RATE_TYPE, Integer.toString(appReq.getAdaptionRateType()));
-		entry.put(AppReqPusher.Columns.COLUMN_TIME_OUT, Integer.toString(appReq.getTimeout()));
+		entry.put(AppReqPusher.Columns.COLUMN_TOPIC, topicReq.getTopic());
+		entry.put(AppReqPusher.Columns.COLUMN_MIN, Integer.toString(topicReq.getMin()));
+		entry.put(AppReqPusher.Columns.COLUMN_MAX, Integer.toString(topicReq.getMax()));
+		entry.put(AppReqPusher.Columns.COLUMN_TIME_OUT, Integer.toString(topicReq.getTimeout()));
 
-		
 		return entry;
 
 	}

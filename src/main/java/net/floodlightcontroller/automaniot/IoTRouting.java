@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -104,7 +105,9 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
     protected ITopologyService topologyService;
     protected IDebugCounterService debugCounterService;
     protected ILinkDiscoveryService linkService;
+	protected ITopicReqPusherService topicReqService;
 	protected IAppReqPusherService appReqService;
+	
 
     
     // flow-mod - for use in the cookie
@@ -910,10 +913,10 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
         		mb.setExact(MatchField.IP_PROTO, IpProtocol.TCP);
         		
         		if(!appReq.getSrcPort().equals(TransportPort.of(0)))
-        			mb.setExact(MatchField.TCP_SRC, appReq.getSrcPort());
+        			mb.setExact(MatchField.TCP_SRC, appReq.getSrcTransPort());
         		
         		if(!appReq.getDstPort().equals(TransportPort.of(0)))
-        			mb.setExact(MatchField.TCP_DST, appReq.getDstPort());
+        			mb.setExact(MatchField.TCP_DST, appReq.getDstTransPort());
         		
         	} else if (protocol == "arp"){
         		mb.setExact(MatchField.ETH_TYPE, EthType.ARP);
@@ -945,10 +948,10 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
         		mb.setExact(MatchField.IP_PROTO, IpProtocol.TCP);
         		
         		if(!appReq.getSrcPort().equals(TransportPort.of(0)))
-        			mb.setExact(MatchField.TCP_DST, appReq.getSrcPort());
+        			mb.setExact(MatchField.TCP_DST, appReq.getSrcTransPort());
         		
         		if(!appReq.getDstPort().equals(TransportPort.of(0)))
-        			mb.setExact(MatchField.TCP_SRC, appReq.getDstPort());
+        			mb.setExact(MatchField.TCP_SRC, appReq.getDstTransPort());
         		
         	} else if (protocol == "arp"){
         		mb.setExact(MatchField.ETH_TYPE, EthType.ARP);
@@ -1189,7 +1192,9 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
             this.debugCounterService = context.getServiceImpl(IDebugCounterService.class);
             this.switchService = context.getServiceImpl(IOFSwitchService.class);
             this.linkService = context.getServiceImpl(ILinkDiscoveryService.class);
+    		this.topicReqService = context.getServiceImpl(ITopicReqPusherService.class);
     		this.appReqService = context.getServiceImpl(IAppReqPusherService.class);
+
 
 
             flowSetIdRegistry = FlowSetIdRegistry.getInstance();
@@ -1220,6 +1225,8 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			if (MqttUtils.isMqttMessage(eth)){
 				IPv4 ipv4 = (IPv4) eth.getPayload();
 				log.info("IP src ip {}, dst ip {}", ipv4.getSourceAddress(), ipv4.getDestinationAddress());
+				TCP tcp = (TCP) ipv4.getPayload();
+				
 				MQTTDecoder mdecoder = new MQTTDecoder();
 				List<Object> m_results;
 				m_results = new ArrayList<Object >();
@@ -1235,16 +1242,50 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 						case AbstractMessage.PUBLISH : 
 							PublishMessage mPublish = (PublishMessage) m_results.get(0);
 							mqttMessageType = mPublish;
-							mqttMessageType.getMessageType();
+
 							String topic = mPublish.getTopicName();
-							Set<String> topics = appReqService.getAllTopics();
+							Set<String> topics = topicReqService.getAllTopics();
+							log.info("All Topics  {}", topics);
 							
 							if (topics.contains(topic)){
+								log.info("Mqtt Topic Publish {}", mPublish.getTopicName());
+								log.info("Mqtt All Topics {}",topicReqService.getAllTopics());
+								TopicReq topicReq = topicReqService.getTopicReqFromTopic(topic);
+								
+								//Calculates Path and put in appReq
+								SwitchPort[] switches;
+								SwitchPort srcSwitch = null;
+								SwitchPort dstSwitch = null;
+								Iterator<? extends IDevice> devIter = deviceManagerService.queryDevices(MacAddress.NONE, null, ipv4.getSourceAddress(), IPv6Address.NONE, DatapathId.NONE, OFPort.ZERO);
+								
+								if(devIter.hasNext()){
+									switches = devIter.next().getAttachmentPoints();
+									for (SwitchPort srcsw : switches) {
+										srcSwitch=srcsw;
+									} //TODO: Take only one attached switch - find a best/efficient way to take one
+								} 
+								
+								devIter = deviceManagerService.queryDevices(MacAddress.NONE, null, ipv4.getDestinationAddress(), IPv6Address.NONE, DatapathId.NONE, OFPort.ZERO);
+								if(devIter.hasNext()){
+									switches = devIter.next().getAttachmentPoints();
+									for (SwitchPort dstsw : switches) {
+										dstSwitch=dstsw;
+									} //TODO: Take only one attached switch - find a best/efficient way to take it
+								} 
+								
+								
+								AppReq appReq = new AppReq(topic+appReqService.updateIndex(), topic, 
+										ipv4.getSourceAddress(), ipv4.getDestinationAddress(),
+										srcSwitch.getNodeId(), dstSwitch.getNodeId(), 
+										srcSwitch.getPortId(), dstSwitch.getPortId(),
+										tcp.getSourcePort(), tcp.getDestinationPort(), 
+										topicReq.getMin(), topicReq.getMax(), 1, topicReq.getTimeout());
+								
+							    log.info(appReq.toString());
+								appReqService.addAppReq(AppReqPusher.TABLE_NAME, appReq);
 								
 							} //Se nao ha o topico na lista, prosseguir encaminhamento convencional
 
-							log.info("Mqtt Topic Publish {}", mPublish.getTopicName());
-							log.info("Mqtt All Topics {}",appReqService.getAllTopics());
 							
 							break;
 						case AbstractMessage.SUBSCRIBE : 

@@ -17,6 +17,7 @@ import org.projectfloodlight.openflow.types.IPv4Address;
 import org.projectfloodlight.openflow.types.IPv6Address;
 import org.projectfloodlight.openflow.types.MacAddress;
 import org.projectfloodlight.openflow.types.OFPort;
+import org.projectfloodlight.openflow.types.TransportPort;
 import org.projectfloodlight.openflow.types.U64;
 
 import net.floodlightcontroller.automaniot.mqtt.AbstractMessage;
@@ -79,6 +80,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	
 	protected IFloodlightProviderService floodlightProvider;
 	protected IAppReqPusherService appReqService;
+	protected ITopicReqPusherService topicReqService;
 	protected IStorageSourceService storageSourceService;
 	protected ILinkDiscoveryService linkDiscoveryService;
 	protected IOFSwitchService switchService;
@@ -88,8 +90,6 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	protected Set<Long> macAddresses;
 	protected IOFIoTRouting iotRouting;
 	protected static Logger logger;
-	//protected Set<AppReq> reqTable;
-	protected Map<String, AppReq> appReqMap;
 	protected Map<String, ScheduledFuture<?>> scheduledFutureMap;
 	protected ScheduledThreadPoolExecutor threadPool;
 	
@@ -105,56 +105,67 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 			log.info("Monitoring app:{} in continuous mode, at each {}s", appReq.getName(), appReq.getTimeout());
 			//TODO: Corrigir: latencia mais alta do que a definida no mininet (alem de estar variando bastante). Sugestao pacote de sinalizacao.
 			//log.info("links: {}", linkDiscoveryService.getLinks());
-			
-			//DatapathId srcId = new DatapathId();
-			//Link l = new Link(appReq.getSrcId(), OFPort.ofInt(Integer.valueOf(appReq.getSrcPort().toString())), appReq.getDstId(), 
-			///		OFPort.ofInt(Integer.valueOf(appReq.getDstPort().toString())), U64.of(0L));
-
-			
-			//TODO: Corrigir: Calcular a rota pelo IP da fonte e destino e nao pelo DataPathId usando
-			//deviceService.queryDevices(null, null, appReq.getSrcIP(), null, null, null);
-			//problemas: todos hosts tem que dar um ping na rede para o floodlight cadastrar seu IP
+	
+			//TODO: Corrigir: problema: todos hosts tem que dar um ping na rede para o floodlight cadastrar seu IP
 			//Isso altera as regras aplicadas aos roteadores (verificar)
 			
+			SwitchPort[] switches;
+			SwitchPort srcSwitch = null;
+			SwitchPort dstSwitch = null;
 			Iterator<? extends IDevice> devIter = deviceService.queryDevices(MacAddress.NONE, null, appReq.getSrcIP(), IPv6Address.NONE, DatapathId.NONE, OFPort.ZERO);
+			
 			if(devIter.hasNext()){
-				SwitchPort[] switches = devIter.next().getAttachmentPoints();
-				for (SwitchPort sw : switches) {} //TODO: Take only one attached switch - find a best/efficient way to take one
+				switches = devIter.next().getAttachmentPoints();
+				for (SwitchPort srcsw : switches) {
+					srcSwitch=srcsw;
+				} //TODO: Take only one attached switch - find a best/efficient way to take one
 			} 
 			
+			devIter = deviceService.queryDevices(MacAddress.NONE, null, appReq.getDstIP(), IPv6Address.NONE, DatapathId.NONE, OFPort.ZERO);
+			if(devIter.hasNext()){
+				switches = devIter.next().getAttachmentPoints();
+				for (SwitchPort dstsw : switches) {
+					dstSwitch=dstsw;
+				} //TODO: Take only one attached switch - find a best/efficient way to take it
+			} 
 			
+			//Path originalPath = routingService.getPath(srcSwitch.getNodeId(), srcSwitch.getPortId(), dstSwitch.getNodeId(), dstSwitch.getPortId());
+			Path originalPath = routingService.getPath(appReq.getSrcId(), appReq.getSrcPort(), appReq.getDstId(), appReq.getDstPort());
+
+			U64 originalLatency = originalPath.getLatency();
 			
-			Path p = routingService.getPath(appReq.getSrcId(), appReq.getDstId());
-			Path pinout = routingService.getPath(appReq.getSrcId(), OFPort.ofInt(1), appReq.getDstId(), OFPort.ofInt(1));
-			U64 lat = p.getLatency();
-			
-			
-			if (lat != null){
-				if (lat.getValue() > appReq.getMax()){
-					log.info("Path Atual {}", p);
-					log.info("Path Atual {}", pinout);
-					log.info("Latencia Atual {}", lat.getValue());
+			if (originalLatency != null){
+				if (originalLatency.getValue() > appReq.getMax()){
+					log.info("Path Atual {}", originalPath);
+					log.info("Latencia Atual {}", originalLatency.getValue());
 					log.info("Trying to Set new latency...");
-					Path newPath = routingService.getPath(appReq.getSrcId(), OFPort.ofInt(1), appReq.getDstId(), OFPort.ofInt(1), PATH_METRIC.LATENCY);
-					//to use in bidirectional way
 					
-					//if (!p.equals(newPath)){
+					Path newPath = null;
+					if ((srcSwitch!=null) & (dstSwitch!=null)){
+						newPath = routingService.getPath(srcSwitch.getNodeId(), srcSwitch.getPortId(), dstSwitch.getNodeId(), dstSwitch.getPortId(), PATH_METRIC.LATENCY);
+					}
+					log.info("Nova Latencia {}", newPath);
+					//if (!originalPath.equals(newPath) & newPath!=null){
+					if (newPath!=null){ //only to tests 
 						//iotRouting.setLowerLatencyPath(newPath, switchService, appReq);
-						Path reverseNewPath = new Path(new PathId(appReq.getDstId(), appReq.getSrcId()), newPath.getReversePath());
+						
+						//to use in bidirectional way
+						Path reverseNewPath = new Path(new PathId(srcSwitch.getNodeId(), dstSwitch.getNodeId()), newPath.getReversePath());
 
 					
-						IOFSwitch firstSwitch = switchService.getSwitch(newPath.getPath().get(0).getNodeId());
+						IOFSwitch firstSwitch = switchService.getSwitch(srcSwitch.getNodeId());
+						IOFSwitch lastSwitch = switchService.getSwitch(dstSwitch.getNodeId());
 						
 						//TODO: Organize it to work inside IoTRouting and receiving ARP/IP/Bidirecional as parameter
-						Match matchIP = iotRouting.createMatch(firstSwitch, OFPort.ofInt(1), appReq, "ip");
-						Match reverseMatchIP = iotRouting.createReverseMatch(firstSwitch, OFPort.ofInt(1), appReq, "ip");
-						Match matchARP = iotRouting.createMatch(firstSwitch, OFPort.ofInt(1), appReq, "arp");
-						Match reverseMatchArp = iotRouting.createReverseMatch(firstSwitch, OFPort.ofInt(1), appReq, "arp");
+						Match matchIP = iotRouting.createMatch(firstSwitch, srcSwitch.getPortId(), appReq, "ip");
+						Match reverseMatchIP = iotRouting.createReverseMatch(lastSwitch, dstSwitch.getPortId(), appReq, "ip");
+						Match matchARP = iotRouting.createMatch(firstSwitch, srcSwitch.getPortId(), appReq, "arp");
+						Match reverseMatchArp = iotRouting.createReverseMatch(lastSwitch, dstSwitch.getPortId(), appReq, "arp");
 						OFFlowModCommand flowModCommand = OFFlowModCommand.ADD;
-						iotRouting.pushRoute(newPath, matchIP, newPath.getPath().get(0).getNodeId(), U64.of(0L), false, flowModCommand, true);
-						iotRouting.pushRoute(reverseNewPath, reverseMatchIP, reverseNewPath.getPath().get(0).getNodeId(), U64.of(0L), false, flowModCommand, true);
-						iotRouting.pushRoute(newPath, matchARP, newPath.getPath().get(0).getNodeId(), U64.of(0L), false, flowModCommand, true);
-						iotRouting.pushRoute(reverseNewPath, reverseMatchArp, reverseNewPath.getPath().get(0).getNodeId(), U64.of(0L), false, flowModCommand, true);
+						iotRouting.pushRoute(newPath, matchIP, srcSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
+						iotRouting.pushRoute(reverseNewPath, reverseMatchIP, dstSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
+						iotRouting.pushRoute(newPath, matchARP, srcSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
+						iotRouting.pushRoute(reverseNewPath, reverseMatchArp, dstSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
 					
 					//} else {
 						//log.info("There are no lower delay path/route.{}", iotRouting);
@@ -165,6 +176,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 			//topologyService.getAllLinks();
 			//linkDiscoveryService.getLinkInfo(l);			
 		}
+	}
 	}
 	
 	class LazyDelayMonitor implements Runnable {
@@ -290,11 +302,10 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 		switchService = context.getServiceImpl(IOFSwitchService.class);
 		deviceService = context.getServiceImpl(IDeviceService.class);
 		appReqService = context.getServiceImpl(IAppReqPusherService.class);
+		topicReqService = context.getServiceImpl(ITopicReqPusherService.class);
 		iotRouting = context.getServiceImpl(IOFIoTRouting.class);
 		macAddresses = new ConcurrentSkipListSet<Long>();
 		logger = LoggerFactory.getLogger(AutoManIoT.class);
-		//reqTable = new HashSet<AppReq>();
-		appReqMap = new HashMap<String, AppReq>();
 		storageSourceService = context.getServiceImpl(IStorageSourceService.class);
     	threadPool = new ScheduledThreadPoolExecutor(1);
     	scheduledFutureMap = new HashMap<String, ScheduledFuture<?>>();
@@ -312,26 +323,30 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	    
 	    //Registering a AppReq test
 	    IPv4 ipv4 = new IPv4();
-	    ipv4.setSourceAddress("10.0.0.1");
-	    ipv4.setDestinationAddress("10.0.0.3");
+	    //ipv4.setSourceAddress("10.0.0.1");
+	    //ipv4.setDestinationAddress("10.0.0.3");
 	    
-	    //ipv4.setSourceAddress("10.0.0.5");
-	    //ipv4.setDestinationAddress("10.0.0.6");
+	    ipv4.setSourceAddress("10.0.0.5");
+	    ipv4.setDestinationAddress("10.0.0.6");
 	    TCP tcp = new TCP();
 	    tcp.setSourcePort(1883);
 	    tcp.setDestinationPort(0);
 	    //Insert a AppReq with continuous adaptation rate - null to dispense
-	    AppReq ar = new AppReq("test", "healthcare", ipv4.getSourceAddress(), ipv4.getDestinationAddress(), DatapathId.of(1L), DatapathId.of(3L), tcp.getSourcePort(), tcp.getDestinationPort(), 1, 5, 1, 10);
+	    AppReq ar = new AppReq("aloha", "medical", ipv4.getSourceAddress(), ipv4.getDestinationAddress(), DatapathId.of(1L), DatapathId.of(3L),
+	    		OFPort.of(1), OFPort.of(1), tcp.getSourcePort(), tcp.getDestinationPort(), 1, 5, 1, 10);
 	    log.info(ar.toString());
-	    appReqMap.put(ar.getName(), ar);
 		appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
 		
-		//ar = new AppReq("test1", "transport", ipv4.getSourceAddress(), ipv4.getDestinationAddress(), DatapathId.of(1L), DatapathId.of(3L), tcp.getSourcePort(), tcp.getDestinationPort(), 1, 5, 1, 20);
+		//nao utilizar; problema ao procurar rota em continuous monitoring, com valores nulos.
+		//ar = new AppReq("testNull", "transport", IPv4Address.NONE, IPv4Address.NONE, DatapathId.NONE, DatapathId.NONE, OFPort.ZERO, OFPort.ZERO, TransportPort.NONE, TransportPort.NONE, 1, 5, 1, 20);
 	    //log.info(ar.toString());
 	    //appReqMap.put(ar.getName(), ar);
-		//s	appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
+		//appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
 		
-		
+		TopicReq tr = new TopicReq("aloha", 10, 100, 5);
+		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
+		tr = new TopicReq("healthcare", 10, 100, 5);
+		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 	    
 	}
 

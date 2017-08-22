@@ -44,6 +44,10 @@ public class AppReqMapSerializer extends JsonSerializer<AppReqMap> {
 				jGen.writeString(theMap.get(id).getSrcPort().toString());
 				jGen.writeFieldName("dst_port");
 				jGen.writeString(theMap.get(id).getDstPort().toString());
+				jGen.writeFieldName("src_trans_port");
+				jGen.writeString(theMap.get(id).getSrcTransPort().toString());
+				jGen.writeFieldName("dst_trans_port");
+				jGen.writeString(theMap.get(id).getDstTransPort().toString());
 				jGen.writeFieldName("min");
 				jGen.writeString(Integer.toString(theMap.get(id).getMin()));
 				jGen.writeFieldName("max");

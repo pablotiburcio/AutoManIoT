@@ -8,19 +8,15 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.projectfloodlight.openflow.protocol.OFMessage;
-import org.projectfloodlight.openflow.protocol.OFType;
 import org.projectfloodlight.openflow.types.DatapathId;
+import org.projectfloodlight.openflow.types.OFPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableSet;
 
 import net.floodlightcontroller.automaniot.web.RoutableAppReq;
-import net.floodlightcontroller.core.FloodlightContext;
 import net.floodlightcontroller.core.IFloodlightProviderService;
-import net.floodlightcontroller.core.IOFMessageListener;
-import net.floodlightcontroller.core.IOFSwitch;
 import net.floodlightcontroller.core.internal.IOFSwitchService;
 import net.floodlightcontroller.core.module.FloodlightModuleContext;
 import net.floodlightcontroller.core.module.FloodlightModuleException;
@@ -39,6 +35,8 @@ implements IFloodlightModule, IStorageSourceListener, IAppReqPusherService {
 	protected static Logger log = LoggerFactory.getLogger(AppReqPusher.class);
 	public static final String MODULE_NAME = "appreqpusher";
 
+	private int appReqIndex=0; //correct it
+	
 	public static final int STATIC_ENTRY_APP_ID = 10;
 	//static {
 	//	AppCookie.registerApp(STATIC_ENTRY_APP_ID, MODULE_NAME);
@@ -64,6 +62,8 @@ implements IFloodlightModule, IStorageSourceListener, IAppReqPusherService {
 		public static final String COLUMN_DESTINATION_ID = "dst_id";
 		public static final String COLUMN_SOURCE_PORT = "src_port";
 		public static final String COLUMN_DESTINATION_PORT = "dst_port";
+		public static final String COLUMN_SOURCE_TRANSPORT_PORT = "src_trans_port";
+		public static final String COLUMN_DESTINATION_TRANSPORT_PORT = "dst_trans_port";
 		public static final String COLUMN_MIN = "min";
 		public static final String COLUMN_MAX = "max";
 		public static final String COLUMN_ADAPTATION_RATE_TYPE = "adap_rate_type";
@@ -78,6 +78,7 @@ implements IFloodlightModule, IStorageSourceListener, IAppReqPusherService {
 		try {
 			Map<String, Object> map = AppReqEntries.appReqToStorageEntry(appReq);
 			storageSourceService.insertRowAsync(TABLE_NAME, map);
+			appReqIndex++;
 			appReqFromStorage = readAppReqFromStorage();
 		} catch (Exception e) {
 			log.error("Did not add AppReq with bad match/action combination. {}", appReq.toString());
@@ -161,6 +162,8 @@ implements IFloodlightModule, IStorageSourceListener, IAppReqPusherService {
 		tmp.add(Columns.COLUMN_DESTINATION_ID);
 		tmp.add(Columns.COLUMN_SOURCE_PORT);
 		tmp.add(Columns.COLUMN_DESTINATION_PORT);
+		tmp.add(Columns.COLUMN_SOURCE_TRANSPORT_PORT);
+		tmp.add(Columns.COLUMN_DESTINATION_TRANSPORT_PORT);
 		tmp.add(Columns.COLUMN_MIN);
 		tmp.add(Columns.COLUMN_MAX);
 		tmp.add(Columns.COLUMN_ADAPTATION_RATE_TYPE);
@@ -181,8 +184,11 @@ implements IFloodlightModule, IStorageSourceListener, IAppReqPusherService {
 		//DatapathId dstId = new DatapathId();
 		
 		TCP tcp = new TCP();
-		tcp.setSourcePort(Integer.valueOf((String)row.get(Columns.COLUMN_SOURCE_PORT)));
-		tcp.setDestinationPort(Integer.valueOf((String)row.get(Columns.COLUMN_DESTINATION_PORT)));
+		tcp.setSourcePort(Integer.valueOf((String)row.get(Columns.COLUMN_SOURCE_TRANSPORT_PORT)));
+		tcp.setDestinationPort(Integer.valueOf((String)row.get(Columns.COLUMN_DESTINATION_TRANSPORT_PORT)));
+		
+		OFPort ofSrcPort = OFPort.of(Integer.valueOf((String)row.get(Columns.COLUMN_SOURCE_PORT)));
+		OFPort ofDstPort = OFPort.of(Integer.valueOf((String)row.get(Columns.COLUMN_DESTINATION_PORT)));
 
 		int min = Integer.valueOf((String)row.get(Columns.COLUMN_MIN));
 		int max = Integer.valueOf((String)row.get(Columns.COLUMN_MAX));
@@ -191,7 +197,8 @@ implements IFloodlightModule, IStorageSourceListener, IAppReqPusherService {
 		String name = (String)row.get(Columns.COLUMN_NAME);
 		String topic = (String)row.get(Columns.COLUMN_TOPIC);
 
-		AppReq reqTable = new AppReq(name, topic, ipv4.getSourceAddress(), ipv4.getDestinationAddress(), srcId, dstId, 
+		AppReq reqTable = new AppReq(name, topic, ipv4.getSourceAddress(), ipv4.getDestinationAddress(), 
+				srcId, dstId, ofSrcPort, ofDstPort,
 				tcp.getSourcePort(), tcp.getDestinationPort(), min, max, adap_rate_type,timeout);
 		appReqs.put((String) row.get(Columns.COLUMN_NAME), reqTable);
 	}
@@ -258,6 +265,11 @@ implements IFloodlightModule, IStorageSourceListener, IAppReqPusherService {
 	public Map<String, AppReq> getAppReq(int reqId) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+	
+	@Override
+	public int updateIndex(){
+		return appReqIndex++;
 	}
 
 

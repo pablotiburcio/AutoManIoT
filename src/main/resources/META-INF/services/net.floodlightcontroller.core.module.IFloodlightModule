@@ -31,5 +31,6 @@ net.floodlightcontroller.routing.RoutingManager
 net.floodlightcontroller.cpanalyzer.CPAnalyzer
 net.floodlightcontroller.mactracker.MACTracker
 net.floodlightcontroller.automaniot.AppReqPusher
+net.floodlightcontroller.automaniot.TopicReqPusher
 net.floodlightcontroller.automaniot.IoTRouting
 net.floodlightcontroller.automaniot.AutoManIoT
