@@ -1273,6 +1273,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 									} //TODO: Take only one attached switch - find a best/efficient way to take it
 								} 
 								
+								
 								//TODO: Verificar se nao encontrou valores/switches
 								//AppReq appReq = new AppReq(topic+appReqService.updateIndex(), topic, 
 								AppReq appReq = new AppReq(topic, topic, 
