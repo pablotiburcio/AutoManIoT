@@ -1217,27 +1217,31 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 		}
 		
 		
+		
+		@Override
 		public boolean pushRoute(Path path, AppReq appReq){
 			
-			
-			
 			//to use in bidirectional way
-			Path reverseNewPath = new Path(new PathId(appReq.getSrcId(), appReq.getDstId()), path.getReversePath());
+			Path reversePath = new Path(new PathId(appReq.getSrcId(), appReq.getDstId()), path.getReversePath());
 
 		
 			IOFSwitch firstSwitch = switchService.getSwitch(appReq.getSrcId());
 			IOFSwitch lastSwitch = switchService.getSwitch(appReq.getDstId());
 			
-//			//TODO: Organize it to work inside IoTRouting and receiving ARP/IP/Bidirecional as parameter
-//			Match matchIP = createMatch(firstSwitch, appReq.getSrcPort(), appReq, "ip");
-//			Match reverseMatchIP = iotRouting.createReverseMatch(lastSwitch, dstSwitch.getPortId(), appReq, "ip");
-//			Match matchARP = iotRouting.createMatch(firstSwitch, srcSwitch.getPortId(), appReq, "arp");
-//			Match reverseMatchArp = iotRouting.createReverseMatch(lastSwitch, dstSwitch.getPortId(), appReq, "arp");
-//			OFFlowModCommand flowModCommand = OFFlowModCommand.ADD;
-//			iotRouting.pushRoute(newPath, matchIP, srcSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
-//			iotRouting.pushRoute(reverseNewPath, reverseMatchIP, dstSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
-//			iotRouting.pushRoute(newPath, matchARP, srcSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
-			return true;
+			//TODO: Organize it to work inside IoTRouting and receiving ARP/IP/Bidirecional as parameter
+			Match matchIP = createMatch(firstSwitch, appReq.getSrcPort(), appReq, "ip");
+			Match reverseMatchIP = createReverseMatch(lastSwitch, appReq.getDstPort(), appReq, "ip");
+			Match matchARP = createMatch(firstSwitch, appReq.getSrcPort(), appReq, "arp");
+			Match reverseMatchArp = createReverseMatch(lastSwitch, appReq.getDstPort(), appReq, "arp");
+			OFFlowModCommand flowModCommand = OFFlowModCommand.ADD;
+			
+			boolean toReturn;
+			toReturn = pushRoute(path, matchIP, appReq.getSrcId(), U64.of(0L), false, flowModCommand, true);
+			toReturn = toReturn & pushRoute(reversePath, reverseMatchIP, appReq.getDstId(), U64.of(0L), false, flowModCommand, true);
+			toReturn = toReturn & pushRoute(path, matchARP,appReq.getSrcId(), U64.of(0L), false, flowModCommand, true);
+			toReturn = toReturn & pushRoute(reversePath, reverseMatchArp, appReq.getDstId(), U64.of(0L), false, flowModCommand, true);
+
+			return toReturn;
 		}
 		
 		
@@ -1312,8 +1316,8 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 								//log.info("Mqtt Topic Publish {}", mPublish.getTopicName());
 								//log.info("Mqtt All Topics {}",topicReqService.getAllTopics());
 								TopicReq topicReq = topicReqService.getTopicReqFromTopic(topic);
-								
-								//Calculates Path and put in appReq
+																
+								//TODO: codigo duplicado. Colocar em um metodo de IoTRouting
 								SwitchPort[] switches;
 								SwitchPort srcSwitch = null;
 								SwitchPort dstSwitch = null;
@@ -1334,7 +1338,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 									} //TODO: Take only one attached switch - find a best/efficient way to take it
 								} 
 								
-								
+								//Calculates Path and put in appReq
 								//TODO: Verificar se nao encontrou valores/switches
 								if ((srcSwitch!=null) & (dstSwitch!=null)){
 									//AppReq appReq = new AppReq(topic+appReqService.updateIndex(), topic, 

@@ -131,7 +131,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 					if (newPath!=null){ //only to tests 
 						//iotRouting.setLowerLatencyPath(newPath, switchService, appReq);
 						
-//						iotRouting.
+						iotRouting.pushRoute(newPath, appReq);
 //						
 //						//to use in bidirectional way
 //						Path reverseNewPath = new Path(new PathId(srcSwitch.getNodeId(), dstSwitch.getNodeId()), newPath.getReversePath());
