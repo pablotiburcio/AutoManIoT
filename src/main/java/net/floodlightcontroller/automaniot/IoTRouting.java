@@ -85,6 +85,7 @@ import net.floodlightcontroller.routing.IRoutingDecision;
 import net.floodlightcontroller.routing.IRoutingService;
 import net.floodlightcontroller.routing.IRoutingService.PATH_METRIC;
 import net.floodlightcontroller.routing.Path;
+import net.floodlightcontroller.routing.PathId;
 import net.floodlightcontroller.topology.ITopologyService;
 import net.floodlightcontroller.util.FlowModUtils;
 import net.floodlightcontroller.util.MatchUtils;
@@ -1215,6 +1216,66 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 
 		}
 		
+		
+		public boolean pushRoute(Path path, AppReq appReq){
+			
+			
+			
+			//to use in bidirectional way
+			Path reverseNewPath = new Path(new PathId(appReq.getSrcId(), appReq.getDstId()), path.getReversePath());
+
+		
+			IOFSwitch firstSwitch = switchService.getSwitch(appReq.getSrcId());
+			IOFSwitch lastSwitch = switchService.getSwitch(appReq.getDstId());
+			
+//			//TODO: Organize it to work inside IoTRouting and receiving ARP/IP/Bidirecional as parameter
+//			Match matchIP = createMatch(firstSwitch, appReq.getSrcPort(), appReq, "ip");
+//			Match reverseMatchIP = iotRouting.createReverseMatch(lastSwitch, dstSwitch.getPortId(), appReq, "ip");
+//			Match matchARP = iotRouting.createMatch(firstSwitch, srcSwitch.getPortId(), appReq, "arp");
+//			Match reverseMatchArp = iotRouting.createReverseMatch(lastSwitch, dstSwitch.getPortId(), appReq, "arp");
+//			OFFlowModCommand flowModCommand = OFFlowModCommand.ADD;
+//			iotRouting.pushRoute(newPath, matchIP, srcSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
+//			iotRouting.pushRoute(reverseNewPath, reverseMatchIP, dstSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
+//			iotRouting.pushRoute(newPath, matchARP, srcSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
+			return true;
+		}
+		
+		
+		@Override
+		public Path getLowerPathLatency(AppReq appReq){
+			//TODO: Corrigir: problema: todos hosts tem que dar um ping na rede para o floodlight cadastrar seu IP
+			//Isso altera as regras aplicadas aos roteadores (verificar)
+			
+			SwitchPort[] switches;
+			SwitchPort srcSwitch = null;
+			SwitchPort dstSwitch = null;
+			Iterator<? extends IDevice> devIter = deviceManagerService.queryDevices(MacAddress.NONE, null, appReq.getSrcIP(), IPv6Address.NONE, DatapathId.NONE, OFPort.ZERO);
+			
+			if(devIter.hasNext()){
+				switches = devIter.next().getAttachmentPoints();
+				for (SwitchPort srcsw : switches) {
+					srcSwitch=srcsw;
+				} //TODO: Take only one attached switch - find a best/efficient way to take one
+			} 
+			
+			devIter = deviceManagerService.queryDevices(MacAddress.NONE, null, appReq.getDstIP(), IPv6Address.NONE, DatapathId.NONE, OFPort.ZERO);
+			if(devIter.hasNext()){
+				switches = devIter.next().getAttachmentPoints();
+				for (SwitchPort dstsw : switches) {
+					dstSwitch=dstsw;
+				} //TODO: Take only one attached switch - find a best/efficient way to take it
+			} 
+			
+			Path newPath = null;
+			if ((srcSwitch!=null) & (dstSwitch!=null)){
+				newPath = routingEngineService.getPath(srcSwitch.getNodeId(), srcSwitch.getPortId(), dstSwitch.getNodeId(), dstSwitch.getPortId(), PATH_METRIC.LATENCY);
+				log.info("Latencia da nova rota {}", newPath.getLatency());
+				
+			}
+			log.info("Nova Latencia {}", newPath);
+			return newPath;
+		}
+		
 		@Override
 		public net.floodlightcontroller.core.IListener.Command receive(IOFSwitch sw, OFMessage msg,
 				FloodlightContext cntx) {
@@ -1245,11 +1306,11 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 
 							String topic = mPublish.getTopicName();
 							Set<String> topics = topicReqService.getAllTopics();
-							log.info("All Topics  {}", topics);
+							//log.info("All Topics  {}", topics);
 							
 							if (topics.contains(topic)){
-								log.info("Mqtt Topic Publish {}", mPublish.getTopicName());
-								log.info("Mqtt All Topics {}",topicReqService.getAllTopics());
+								//log.info("Mqtt Topic Publish {}", mPublish.getTopicName());
+								//log.info("Mqtt All Topics {}",topicReqService.getAllTopics());
 								TopicReq topicReq = topicReqService.getTopicReqFromTopic(topic);
 								
 								//Calculates Path and put in appReq
@@ -1275,16 +1336,29 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 								
 								
 								//TODO: Verificar se nao encontrou valores/switches
-								//AppReq appReq = new AppReq(topic+appReqService.updateIndex(), topic, 
-								AppReq appReq = new AppReq(topic, topic, 
-										ipv4.getSourceAddress(), ipv4.getDestinationAddress(),
-										srcSwitch.getNodeId(), dstSwitch.getNodeId(), 
-										srcSwitch.getPortId(), dstSwitch.getPortId(),
-										tcp.getSourcePort(), tcp.getDestinationPort(), 
-										topicReq.getMin(), topicReq.getMax(), 1, topicReq.getTimeout());
-								
-							    log.info("Inserido este appReq no IoTRouting {}", appReq.toString());
-								appReqService.addAppReq(AppReqPusher.TABLE_NAME, appReq);
+								if ((srcSwitch!=null) & (dstSwitch!=null)){
+									//AppReq appReq = new AppReq(topic+appReqService.updateIndex(), topic, 
+									AppReq appReq = new AppReq(topic+appReqService.updateIndex(), topic, 
+											ipv4.getSourceAddress(), ipv4.getDestinationAddress(),
+											srcSwitch.getNodeId(), dstSwitch.getNodeId(), 
+											srcSwitch.getPortId(), dstSwitch.getPortId(),
+											tcp.getSourcePort(), tcp.getDestinationPort(), 
+											topicReq.getMin(), topicReq.getMax(), 2, topicReq.getTimeout());
+
+									log.info("Inserido este appReq no IoTRouting {}", appReq.toString());
+									appReqService.addAppReq(AppReqPusher.TABLE_NAME, appReq);
+									//TODO: verificar se o pacote nao foi reenviado para o roteador para encaminhamento antes da nova rota ser aplicada
+									/* Use the buffered packet at the switch, if there's one stored */
+									
+//							         * @param sw switch that generated the packet-in, and from which packet-out is sent
+//							         * @param pi packet-in
+//							         * @param outport output port
+//							         * @param useBufferedPacket use the packet buffered at the switch, if possible
+//							         * @param cntx context of the packet
+									//IOFSwitch sw, OFPacketIn pi, OFPort outport, boolean useBufferedPacket, FloodlightContext cntx
+				                    //pushPacket(sw, pi, outPort, true, cntx); 
+
+								}
 								
 							} //Se nao ha o topico na lista, prosseguir encaminhamento convencional
 

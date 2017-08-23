@@ -1203,7 +1203,8 @@ public class TopologyInstance {
         
         /* Path cannot be null, but empty b/t 2 diff DPIDs -> not found */
         if (! srcId.equals(dstId) && r.getPath().isEmpty()) {
-            return r;
+        //if (! (srcId.equals(dstId) && r.getPath().isEmpty())) {
+        	return r;
         }
 
         /* Else, path is valid (len=0) on the same DPID or (len>0) diff DPIDs */
@@ -1216,6 +1217,23 @@ public class TopologyInstance {
         PathId id = new PathId(srcId, dstId);
         r = new Path(id, nptList);
         return r;
+        
+        //new code
+        //TODO: Verificar: Corrige o codigo para pegar rota com latencia, mas fazendo isto ping nao funciona
+//        Path result = null;
+//
+//        try {
+//        	if (!pathcache.get(id).isEmpty()) {
+//        		result = pathcache.get(id).get(0);
+//        	}
+//        } catch (Exception e) {
+//        	log.warn("Could not find route from {} to {}. If the path exists, wait for the topology to settle, and it will be detected", srcId, dstId);
+//        }
+//
+//        if (log.isTraceEnabled()) {
+//        	log.trace("getPath: {} -> {}", id, result);
+//        }
+//        return result == null ? new Path(id, nptList) : result;
     }
 
 
@@ -1262,6 +1280,8 @@ public class TopologyInstance {
 
         if (paths == null) return new Path(pathId, ImmutableList.of());
         
+        //TODO: Calcular previamente, como no funcionamento padrao e armazenar em outro pathcache, 
+        //Para nao calcular/recalcular a cada chegada de requisicao nova
         return yens(srcId, dstId, 1, getArchipelago(srcId), getArchipelago(dstId), pm).get(0); /* heavy computation */
         //}
         //else {
@@ -1286,8 +1306,17 @@ public class TopologyInstance {
         nptList.add(npt); // add dst port to the end
 
         PathId id = new PathId(srcId, dstId);
-        r = new Path(id, nptList);
-        return r;
+
+        try {
+            if (!pathcache.get(id).isEmpty()) {
+                r = pathcache.get(id).get(0);
+            }
+        } catch (Exception e) {
+            log.warn("Could not find route from {} to {}. If the path exists, wait for the topology to settle, and it will be detected", srcId, dstId);
+        }
+        
+        return r == null ? new Path(id, ImmutableList.of()) : r;
+
     }
 
     //

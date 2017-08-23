@@ -26,4 +26,6 @@ public interface IOFIoTRouting extends IFloodlightService {
 	
 	boolean setLowerLatencyPath(Path oldPath, IOFSwitchService switchService, AppReq appReq);
 	
+	Path getLowerPathLatency(AppReq appReq);
+	
 }

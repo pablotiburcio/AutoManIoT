@@ -109,67 +109,48 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 			//TODO: Corrigir: problema: todos hosts tem que dar um ping na rede para o floodlight cadastrar seu IP
 			//Isso altera as regras aplicadas aos roteadores (verificar)
 			
-			SwitchPort[] switches;
-			SwitchPort srcSwitch = null;
-			SwitchPort dstSwitch = null;
-			Iterator<? extends IDevice> devIter = deviceService.queryDevices(MacAddress.NONE, null, appReq.getSrcIP(), IPv6Address.NONE, DatapathId.NONE, OFPort.ZERO);
-			
-			if(devIter.hasNext()){
-				switches = devIter.next().getAttachmentPoints();
-				for (SwitchPort srcsw : switches) {
-					srcSwitch=srcsw;
-				} //TODO: Take only one attached switch - find a best/efficient way to take one
-			} 
-			
-			devIter = deviceService.queryDevices(MacAddress.NONE, null, appReq.getDstIP(), IPv6Address.NONE, DatapathId.NONE, OFPort.ZERO);
-			if(devIter.hasNext()){
-				switches = devIter.next().getAttachmentPoints();
-				for (SwitchPort dstsw : switches) {
-					dstSwitch=dstsw;
-				} //TODO: Take only one attached switch - find a best/efficient way to take it
-			} 
 			
 			//Path originalPath = routingService.getPath(srcSwitch.getNodeId(), srcSwitch.getPortId(), dstSwitch.getNodeId(), dstSwitch.getPortId());
-			Path originalPath = routingService.getPath(appReq.getSrcId(), appReq.getSrcPort(), appReq.getDstId(), appReq.getDstPort());
-			log.info("Path Atual fora do IF {}", originalPath);
-			log.info("appReq {}", appReq.toString());
-
+			//TODO: Latencia retorna null quando o getPath e calculado com 4 parametros (se corrigir em topology o ping nao funciona mais)
+			//Path originalPath = routingService.getPath(appReq.getSrcId(), appReq.getSrcPort(), appReq.getDstId(), appReq.getDstPort());
+			Path originalPath = routingService.getPath(appReq.getSrcId(), appReq.getDstId());
 			
 			U64 originalLatency = originalPath.getLatency();
-			log.info("originalLatency {}", originalLatency);
+			log.info("Latencia da rota antiga {}", originalPath.getLatency());
 			
 			if (originalLatency != null){
 				if (originalLatency.getValue() > appReq.getMax()){
 					log.info("Path Atual {}", originalPath);
 					log.info("Latencia Atual {}", originalLatency.getValue());
-					log.info("Trying to Set new latency...");
+					log.info("Trying to Set new latency.................");
 					
-					Path newPath = null;
-					if ((srcSwitch!=null) & (dstSwitch!=null)){
-						newPath = routingService.getPath(srcSwitch.getNodeId(), srcSwitch.getPortId(), dstSwitch.getNodeId(), dstSwitch.getPortId(), PATH_METRIC.LATENCY);
-					}
-					log.info("Nova Latencia {}", newPath);
+					Path newPath = iotRouting.getLowerPathLatency(appReq);
+						
+					
 					//if (!originalPath.equals(newPath) & newPath!=null){
 					if (newPath!=null){ //only to tests 
 						//iotRouting.setLowerLatencyPath(newPath, switchService, appReq);
 						
-						//to use in bidirectional way
-						Path reverseNewPath = new Path(new PathId(srcSwitch.getNodeId(), dstSwitch.getNodeId()), newPath.getReversePath());
+//						iotRouting.
+//						
+//						//to use in bidirectional way
+//						Path reverseNewPath = new Path(new PathId(srcSwitch.getNodeId(), dstSwitch.getNodeId()), newPath.getReversePath());
+//
+//					
+//						IOFSwitch firstSwitch = switchService.getSwitch(srcSwitch.getNodeId());
+//						IOFSwitch lastSwitch = switchService.getSwitch(dstSwitch.getNodeId());
+//						
+//						//TODO: Organize it to work inside IoTRouting and receiving ARP/IP/Bidirecional as parameter
+//						Match matchIP = iotRouting.createMatch(firstSwitch, srcSwitch.getPortId(), appReq, "ip");
+//						Match reverseMatchIP = iotRouting.createReverseMatch(lastSwitch, dstSwitch.getPortId(), appReq, "ip");
+//						Match matchARP = iotRouting.createMatch(firstSwitch, srcSwitch.getPortId(), appReq, "arp");
+//						Match reverseMatchArp = iotRouting.createReverseMatch(lastSwitch, dstSwitch.getPortId(), appReq, "arp");
+//						OFFlowModCommand flowModCommand = OFFlowModCommand.ADD;
+//						iotRouting.pushRoute(newPath, matchIP, srcSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
+//						iotRouting.pushRoute(reverseNewPath, reverseMatchIP, dstSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
+//						iotRouting.pushRoute(newPath, matchARP, srcSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
+//						iotRouting.pushRoute(reverseNewPath, reverseMatchArp, dstSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
 
-					
-						IOFSwitch firstSwitch = switchService.getSwitch(srcSwitch.getNodeId());
-						IOFSwitch lastSwitch = switchService.getSwitch(dstSwitch.getNodeId());
-						
-						//TODO: Organize it to work inside IoTRouting and receiving ARP/IP/Bidirecional as parameter
-						Match matchIP = iotRouting.createMatch(firstSwitch, srcSwitch.getPortId(), appReq, "ip");
-						Match reverseMatchIP = iotRouting.createReverseMatch(lastSwitch, dstSwitch.getPortId(), appReq, "ip");
-						Match matchARP = iotRouting.createMatch(firstSwitch, srcSwitch.getPortId(), appReq, "arp");
-						Match reverseMatchArp = iotRouting.createReverseMatch(lastSwitch, dstSwitch.getPortId(), appReq, "arp");
-						OFFlowModCommand flowModCommand = OFFlowModCommand.ADD;
-						iotRouting.pushRoute(newPath, matchIP, srcSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
-						iotRouting.pushRoute(reverseNewPath, reverseMatchIP, dstSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
-						iotRouting.pushRoute(newPath, matchARP, srcSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
-						iotRouting.pushRoute(reverseNewPath, reverseMatchArp, dstSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
 					
 					//} else {
 						//log.info("There are no lower delay path/route.{}", iotRouting);
@@ -232,7 +213,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 //				}
 		    
 	    	} else if (appReq.getAdaptionRateType()==2){ //lazy
-	    		scheduledFutureMap.put(name, threadPool.scheduleAtFixedRate(new LazyDelayMonitor(appReq), 0, appReq.getTimeout(), TimeUnit.SECONDS));
+	    		scheduledFutureMap.put(name, threadPool.scheduleAtFixedRate(new LazyDelayMonitor(appReq), appReq.getTimeout(), appReq.getTimeout(), TimeUnit.SECONDS));
 	    	}
 	    }
 	}
