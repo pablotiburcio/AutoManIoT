@@ -2,31 +2,17 @@ package net.floodlightcontroller.automaniot;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
-import org.projectfloodlight.openflow.protocol.OFFlowModCommand;
 import org.projectfloodlight.openflow.protocol.OFMessage;
 import org.projectfloodlight.openflow.protocol.OFPacketIn;
 import org.projectfloodlight.openflow.protocol.OFPortDesc;
 import org.projectfloodlight.openflow.protocol.OFType;
-import org.projectfloodlight.openflow.protocol.match.Match;
 import org.projectfloodlight.openflow.types.DatapathId;
-import org.projectfloodlight.openflow.types.IPv4Address;
-import org.projectfloodlight.openflow.types.IPv6Address;
-import org.projectfloodlight.openflow.types.MacAddress;
 import org.projectfloodlight.openflow.types.OFPort;
-import org.projectfloodlight.openflow.types.TransportPort;
 import org.projectfloodlight.openflow.types.U64;
 
-import net.floodlightcontroller.automaniot.mqtt.AbstractMessage;
-import net.floodlightcontroller.automaniot.mqtt.MQTTDecoder;
-import net.floodlightcontroller.automaniot.mqtt.MqttUtils;
-import net.floodlightcontroller.automaniot.mqtt.PublishMessage;
-import net.floodlightcontroller.automaniot.mqtt.SubscribeMessage;
-import net.floodlightcontroller.automaniot.mqtt.UnsubAckMessage;
-import net.floodlightcontroller.automaniot.mqtt.UnsubscribeMessage;
+
 import net.floodlightcontroller.core.FloodlightContext;
 import net.floodlightcontroller.core.IOFMessageListener;
 import net.floodlightcontroller.core.IOFSwitch;
@@ -37,17 +23,13 @@ import net.floodlightcontroller.core.module.FloodlightModuleContext;
 import net.floodlightcontroller.core.module.FloodlightModuleException;
 import net.floodlightcontroller.core.module.IFloodlightModule;
 import net.floodlightcontroller.core.module.IFloodlightService;
-import net.floodlightcontroller.devicemanager.IDevice;
 import net.floodlightcontroller.devicemanager.IDeviceService;
-import net.floodlightcontroller.devicemanager.SwitchPort;
-import net.floodlightcontroller.devicemanager.internal.Device;
+
 import net.floodlightcontroller.linkdiscovery.ILinkDiscoveryService;
 import net.floodlightcontroller.core.IFloodlightProviderService;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -59,20 +41,15 @@ import net.floodlightcontroller.packet.Ethernet;
 import net.floodlightcontroller.packet.IPv4;
 import net.floodlightcontroller.packet.TCP;
 import net.floodlightcontroller.routing.IRoutingService;
-import net.floodlightcontroller.routing.IRoutingService.PATH_METRIC;
 import net.floodlightcontroller.routing.Path;
-import net.floodlightcontroller.routing.PathId;
 import net.floodlightcontroller.storage.IStorageSourceListener;
 import net.floodlightcontroller.storage.IStorageSourceService;
 import net.floodlightcontroller.topology.ITopologyService;
-import net.floodlightcontroller.util.FlowModUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStorageSourceListener, IOFSwitchListener {
 	protected static Logger log = LoggerFactory.getLogger(AutoManIoT.class);
@@ -101,67 +78,18 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 			appReq = ar;
 		}
 		public void run(){
-			
+
 			log.info("Monitoring app:{} in continuous mode, at each {}s", appReq.getName(), appReq.getTimeout());
 			//TODO: Corrigir: latencia mais alta do que a definida no mininet (alem de estar variando bastante). Sugestao pacote de sinalizacao.
 			//log.info("links: {}", linkDiscoveryService.getLinks());
-	
+
 			//TODO: Corrigir: problema: todos hosts tem que dar um ping na rede para o floodlight cadastrar seu IP
 			//Isso altera as regras aplicadas aos roteadores (verificar)
-			
-			
-			//Path originalPath = routingService.getPath(srcSwitch.getNodeId(), srcSwitch.getPortId(), dstSwitch.getNodeId(), dstSwitch.getPortId());
-			//TODO: Latencia retorna null quando o getPath e calculado com 4 parametros (se corrigir em topology o ping nao funciona mais)
-			//Path originalPath = routingService.getPath(appReq.getSrcId(), appReq.getSrcPort(), appReq.getDstId(), appReq.getDstPort());
-			Path originalPath = routingService.getPath(appReq.getSrcId(), appReq.getDstId());
-			
-			U64 originalLatency = originalPath.getLatency();
-			log.info("Latencia da rota antiga {}", originalPath.getLatency());
-			
-			if (originalLatency != null){
-				if (originalLatency.getValue() > appReq.getMax()){
-					log.info("Path Atual {}", originalPath);
-					log.info("Latencia Atual {}", originalLatency.getValue());
-					log.info("Trying to Set new latency.................");
-					
-					Path newPath = iotRouting.getLowerPathLatency(appReq);
-						
-					
-					//if (!originalPath.equals(newPath) & newPath!=null){
-					if (newPath!=null){ //only to tests 
-						//iotRouting.setLowerLatencyPath(newPath, switchService, appReq);
-						
-						iotRouting.pushRoute(newPath, appReq);
-//						
-//						//to use in bidirectional way
-//						Path reverseNewPath = new Path(new PathId(srcSwitch.getNodeId(), dstSwitch.getNodeId()), newPath.getReversePath());
-//
-//					
-//						IOFSwitch firstSwitch = switchService.getSwitch(srcSwitch.getNodeId());
-//						IOFSwitch lastSwitch = switchService.getSwitch(dstSwitch.getNodeId());
-//						
-//						//TODO: Organize it to work inside IoTRouting and receiving ARP/IP/Bidirecional as parameter
-//						Match matchIP = iotRouting.createMatch(firstSwitch, srcSwitch.getPortId(), appReq, "ip");
-//						Match reverseMatchIP = iotRouting.createReverseMatch(lastSwitch, dstSwitch.getPortId(), appReq, "ip");
-//						Match matchARP = iotRouting.createMatch(firstSwitch, srcSwitch.getPortId(), appReq, "arp");
-//						Match reverseMatchArp = iotRouting.createReverseMatch(lastSwitch, dstSwitch.getPortId(), appReq, "arp");
-//						OFFlowModCommand flowModCommand = OFFlowModCommand.ADD;
-//						iotRouting.pushRoute(newPath, matchIP, srcSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
-//						iotRouting.pushRoute(reverseNewPath, reverseMatchIP, dstSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
-//						iotRouting.pushRoute(newPath, matchARP, srcSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
-//						iotRouting.pushRoute(reverseNewPath, reverseMatchArp, dstSwitch.getNodeId(), U64.of(0L), false, flowModCommand, true);
 
-					
-					//} else {
-						//log.info("There are no lower delay path/route.{}", iotRouting);
-					//}
-				}
-			} 
-			
-			//topologyService.getAllLinks();
-			//linkDiscoveryService.getLinkInfo(l);			
+
+			iotRouting.applyLowerLatencyPath(appReq);
+
 		}
-	}
 	}
 	
 	class LazyDelayMonitor implements Runnable {
@@ -172,12 +100,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 		public void run(){
 			
 			log.info("Monitoring app:{} at any delay or topology change", appReq.getName());
-			//TODO: Corrigir latencia mais alta do que a definida no mininet (alem de esta variando bastante). Sugestao pacote de sinalizacao.
-			//log.info("links: {}", linkDiscoveryService.getLinks());
-			
-			//DatapathId srcId = new DatapathId();
-			//Link l = new Link(appReq.getSrcId(), OFPort.ofInt(Integer.valueOf(appReq.getSrcPort().toString())), appReq.getDstId(), 
-			///		OFPort.ofInt(Integer.valueOf(appReq.getDstPort().toString())), U64.of(0L));
+
 
 			Path p = routingService.getPath(appReq.getSrcId(), appReq.getDstId());
 			U64 lat = p.getLatency();
@@ -198,24 +121,32 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	
 	//Listener to add in reqTable
 	public void appReqAddListener(String name){
-	    if (appReqService.getAppReq(name) != null) {
-	    	AppReq appReq = appReqService.getAppReq(name);
+		if (appReqService.getAppReq(name) != null) {
+			AppReq appReq = appReqService.getAppReq(name);
 
-	    	if (appReq.getAdaptionRateType()==1){ //continuous
-		    	//Execute Delay Monitor at each X sec from timeout in ReqTable
-		    	scheduledFutureMap.put(name, threadPool.scheduleAtFixedRate(new ContinuousDelayMonitor(appReq), 0, appReq.getTimeout(), TimeUnit.SECONDS));
-//		    	try {
-//					scheduledFutureMap.get(name).get();
-//				} catch (InterruptedException | ExecutionException e) {
-//					// TODO Auto-generated catch block
-//					log.info("thread error:");
-//					e.printStackTrace();
-//				}
-		    
-	    	} else if (appReq.getAdaptionRateType()==2){ //lazy
-	    		scheduledFutureMap.put(name, threadPool.scheduleAtFixedRate(new LazyDelayMonitor(appReq), appReq.getTimeout(), appReq.getTimeout(), TimeUnit.SECONDS));
-	    	}
-	    }
+			if (appReq.getAdaptionRateType()==1){ //continuous
+				//Execute Delay Monitor at each X sec from timeout in ReqTable
+				scheduledFutureMap.put(name, threadPool.scheduleAtFixedRate(new ContinuousDelayMonitor(appReq), 0, appReq.getTimeout(), TimeUnit.SECONDS));
+				//		    	try {
+				//					scheduledFutureMap.get(name).get();
+				//				} catch (InterruptedException | ExecutionException e) {
+				//					// TODO Auto-generated catch block
+				//					log.info("thread error:");
+				//					e.printStackTrace();
+				//				}
+
+			//TODO: Decidir qual melhor metodo: Lazy could be:
+			// -receive new message -> verify -> apply new route -> send packet or 
+			// -receive new message -> verify -> apply new route -> send packet -> apply continuous monitoring
+			} else if (appReq.getAdaptionRateType()==2){ //lazy
+				//first: was already done in IoTRouting
+				
+				//second: apply continuous monitoring after timeout
+				scheduledFutureMap.put(name, threadPool.scheduleAtFixedRate(new ContinuousDelayMonitor(appReq), appReq.getTimeout(), appReq.getTimeout(), TimeUnit.SECONDS));
+				
+				
+			}
+		}
 	}
 	
 	//Listener to del in reqTable
@@ -317,10 +248,10 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	    tcp.setSourcePort(1883);
 	    tcp.setDestinationPort(0);
 	    //Insert a AppReq with continuous adaptation rate - null to dispense
-	    AppReq ar = new AppReq("aloha", "medical", ipv4.getSourceAddress(), ipv4.getDestinationAddress(), DatapathId.of(5L), DatapathId.of(6L),
-	    		OFPort.of(1), OFPort.of(1), tcp.getSourcePort(), tcp.getDestinationPort(), 1, 5, 1, 10);
-	    log.info(ar.toString());
-		appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
+//	    AppReq ar = new AppReq("aloha", "medical", ipv4.getSourceAddress(), ipv4.getDestinationAddress(), DatapathId.of(5L), DatapathId.of(6L),
+//	    		OFPort.of(1), OFPort.of(1), tcp.getSourcePort(), tcp.getDestinationPort(), 1, 5, 1, 10);
+//	    log.info(ar.toString());
+//		appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
 		
 		//nao utilizar; problema ao procurar rota em continuous monitoring, com valores nulos.
 		//ar = new AppReq("testNull", "transport", IPv4Address.NONE, IPv4Address.NONE, DatapathId.NONE, DatapathId.NONE, OFPort.ZERO, OFPort.ZERO, TransportPort.NONE, TransportPort.NONE, 1, 5, 1, 20);
@@ -328,9 +259,9 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	    //appReqMap.put(ar.getName(), ar);
 		//appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
 		
-		TopicReq tr = new TopicReq("aloha", 10, 100, 5);
+		TopicReq tr = new TopicReq("aloha", 10, 100, 10);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("healthcare", 10, 100, 5);
+		tr = new TopicReq("healthcare", 10, 100, 10);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 	    
 	}

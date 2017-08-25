@@ -76,10 +76,12 @@ implements IFloodlightModule, IStorageSourceListener, IAppReqPusherService {
 	@Override
 	public void addAppReq(String name, AppReq appReq) {
 		try {
-			Map<String, Object> map = AppReqEntries.appReqToStorageEntry(appReq);
-			storageSourceService.insertRowAsync(TABLE_NAME, map);
-			appReqIndex++;
-			appReqFromStorage = readAppReqFromStorage();
+			if (!appReqFromStorage.containsValue(appReq)){
+				Map<String, Object> map = AppReqEntries.appReqToStorageEntry(appReq);
+				storageSourceService.insertRowAsync(TABLE_NAME, map);
+				appReqIndex++;
+				appReqFromStorage = readAppReqFromStorage();
+			} else { log.error("AppReq was already inserted {}", appReq.toString());}
 		} catch (Exception e) {
 			log.error("Did not add AppReq with bad match/action combination. {}", appReq.toString());
 		}
@@ -105,6 +107,11 @@ implements IFloodlightModule, IStorageSourceListener, IAppReqPusherService {
 		appReqFromStorage = readAppReqFromStorage();
 		return appReqFromStorage;
 	}
+	
+	@Override
+	public boolean contains(AppReq appReq){
+		return appReqFromStorage.containsValue(appReq);
+	}
 
 	@Override
 	public AppReq getAppReq(String reqId) {
@@ -113,6 +120,7 @@ implements IFloodlightModule, IStorageSourceListener, IAppReqPusherService {
 		return m;
 	}
 	
+	@Override
 	public Set<String> getAllTopics(){
 		//appReqFromStorage;
 		Set<String> topics = new HashSet<String>();

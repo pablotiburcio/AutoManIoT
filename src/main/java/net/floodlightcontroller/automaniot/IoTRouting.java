@@ -43,6 +43,7 @@ import org.simpleframework.transport.Transport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.hash.HashCode;
 import com.sun.org.apache.bcel.internal.generic.I2F;
 
 import io.netty.buffer.ByteBuf;
@@ -73,6 +74,7 @@ import net.floodlightcontroller.debugcounter.IDebugCounterService;
 import net.floodlightcontroller.devicemanager.IDevice;
 import net.floodlightcontroller.devicemanager.IDeviceService;
 import net.floodlightcontroller.devicemanager.SwitchPort;
+import net.floodlightcontroller.devicemanager.internal.Entity;
 import net.floodlightcontroller.linkdiscovery.ILinkDiscoveryListener;
 import net.floodlightcontroller.linkdiscovery.ILinkDiscoveryService;
 import net.floodlightcontroller.packet.Ethernet;
@@ -689,9 +691,9 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 				log.debug("Creating flow rules on the route, match rule: {}", m);
 			}
 
-			pushRoute(path, m, sw.getId(), cookie, 
+			pushRoute(path, m, sw.getId(), cookie,
 					requestFlowRemovedNotifn,
-					OFFlowModCommand.ADD, false);	
+					OFFlowModCommand.ADD);	
 			/*pushRoute(path, m, pi, sw.getId(), cookie, 
 					cntx, requestFlowRemovedNotifn,
 					OFFlowModCommand.ADD);*/
@@ -723,7 +725,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 	@Override
         public boolean pushRoute(Path route, Match match,
                 DatapathId pinSwitch, U64 cookie,
-                boolean requestFlowRemovedNotification, OFFlowModCommand flowModCommand, boolean bidirectional) {
+                boolean requestFlowRemovedNotification, OFFlowModCommand flowModCommand) {
 
             boolean packetOutSent = false;
             
@@ -818,9 +820,11 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
                             null, // TODO how to determine output VLAN for lookup of L2 interface group
                             outPort);
                 } else {
-                    //log.info("wrote message to switch");
-
+                    //log.info("wrote to switch {} message {} to port {}", sw.getId(), fmb.getMatch().toString());
+                    //log.info("outport {}, action{}", fmb.getOutPort().toString(), fmb.getActions().toString());
                     messageDamper.write(sw, fmb.build());
+                    
+                    packetOutSent = true;
                 }
 
                 /* Push the packet out the first hop switch */
@@ -828,8 +832,10 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
                         !fmb.getCommand().equals(OFFlowModCommand.DELETE) &&
                         !fmb.getCommand().equals(OFFlowModCommand.DELETE_STRICT)) {
                     /* Use the buffered packet at the switch, if there's one stored */
-                    //pushPacket(sw, pi, outPort, true, cntx); //in continuous adaptation rate there are no packets to write
-                    packetOutSent = true;
+//                    if (pushPacket){
+//                		pushPacket(sw, pi, outPort, true, cntx); //in continuous adaptation rate there are no packets to write
+//                    	packetOutSent = true;
+//                    }
                 }
             }
 
@@ -891,6 +897,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
             pob.setInPort((pi.getVersion().compareTo(OFVersion.OF_12) < 0 ? pi.getInPort() : pi.getMatch().get(MatchField.IN_PORT)));
 
             messageDamper.write(sw, pob.build());
+            
         }
         @Override
         public Match createMatch(IOFSwitch sw, OFPort inPort, AppReq appReq, String protocol) {
@@ -900,11 +907,8 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
         	Match.Builder mb = sw.getOFFactory().buildMatch();
         	mb.setExact(MatchField.IN_PORT, inPort);
         	
-        	if (!appReq.getSrcIP().equals(IPv4Address.of("0.0.0.0"))){ 
-        		mb.setExact(MatchField.IPV4_SRC, appReq.getSrcIP());
-        	}
-        	if (!appReq.getDstIP().equals(IPv4Address.of("0.0.0.0"))) 
-        		mb.setExact(MatchField.IPV4_DST, appReq.getDstIP());
+        	mb.setExact(MatchField.IPV4_SRC, appReq.getSrcIP());
+        	mb.setExact(MatchField.IPV4_DST, appReq.getDstIP());
         	
         	
         	
@@ -936,11 +940,9 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
         	Match.Builder mb = sw.getOFFactory().buildMatch();
         	mb.setExact(MatchField.IN_PORT, inPort);
         	
-        	if (!appReq.getSrcIP().equals(IPv4Address.of("0.0.0.0"))) 
-        		mb.setExact(MatchField.IPV4_DST, appReq.getSrcIP());
+        	mb.setExact(MatchField.IPV4_DST, appReq.getSrcIP());
         	
-        	if (!appReq.getDstIP().equals(IPv4Address.of("0.0.0.0"))) 
-        		mb.setExact(MatchField.IPV4_SRC, appReq.getDstIP());
+        	mb.setExact(MatchField.IPV4_SRC, appReq.getDstIP());
         	
         	
         	if (protocol == "ip"){ //TODO: put it in an organized way
@@ -1222,8 +1224,10 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 		public boolean pushRoute(Path path, AppReq appReq){
 			
 			//to use in bidirectional way
-			Path reversePath = new Path(new PathId(appReq.getSrcId(), appReq.getDstId()), path.getReversePath());
-
+			Path reversePath = new Path(new PathId(appReq.getDstId(), appReq.getSrcId()), path.getReversePath());
+			
+			//log.info("Path para escrever {}", path.toString());
+			//log.info("reversePath para escrever {}", reversePath.toString());
 		
 			IOFSwitch firstSwitch = switchService.getSwitch(appReq.getSrcId());
 			IOFSwitch lastSwitch = switchService.getSwitch(appReq.getDstId());
@@ -1235,13 +1239,45 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			Match reverseMatchArp = createReverseMatch(lastSwitch, appReq.getDstPort(), appReq, "arp");
 			OFFlowModCommand flowModCommand = OFFlowModCommand.ADD;
 			
+			//push route and don't send packet
 			boolean toReturn;
-			toReturn = pushRoute(path, matchIP, appReq.getSrcId(), U64.of(0L), false, flowModCommand, true);
-			toReturn = toReturn & pushRoute(reversePath, reverseMatchIP, appReq.getDstId(), U64.of(0L), false, flowModCommand, true);
-			toReturn = toReturn & pushRoute(path, matchARP,appReq.getSrcId(), U64.of(0L), false, flowModCommand, true);
-			toReturn = toReturn & pushRoute(reversePath, reverseMatchArp, appReq.getDstId(), U64.of(0L), false, flowModCommand, true);
+			toReturn = pushRoute(path, matchIP, appReq.getSrcId(), U64.of(0L), false, flowModCommand);
+			toReturn = toReturn && pushRoute(reversePath, reverseMatchIP ,appReq.getDstId(), U64.of(0L), false, flowModCommand);
+			toReturn = toReturn && pushRoute(path, matchARP, appReq.getSrcId(), U64.of(0L), false, flowModCommand);
+			toReturn = toReturn && pushRoute(reversePath, reverseMatchArp, appReq.getDstId(), U64.of(0L), false, flowModCommand);
 
 			return toReturn;
+		}
+		
+		private ArrayList<SwitchPort> getSrcDstSwitchByIP(IPv4Address srcIP, IPv4Address dstIP){
+			SwitchPort[] switches;
+			SwitchPort srcSwitch = null;
+			SwitchPort dstSwitch = null;
+			Iterator<? extends IDevice> devIter = deviceManagerService.queryDevices(MacAddress.NONE, null, srcIP, IPv6Address.NONE, DatapathId.NONE, OFPort.ZERO);
+
+			if(devIter.hasNext()){
+				switches = devIter.next().getAttachmentPoints();
+				for (SwitchPort srcsw : switches) {
+					srcSwitch=srcsw;
+				} //TODO: Take only one attached switch - find a best/efficient way to take one
+			} 
+
+			devIter = deviceManagerService.queryDevices(MacAddress.NONE, null, dstIP, IPv6Address.NONE, DatapathId.NONE, OFPort.ZERO);
+			if(devIter.hasNext()){
+				switches = devIter.next().getAttachmentPoints();
+				for (SwitchPort dstsw : switches) {
+					dstSwitch=dstsw;
+				} //TODO: Take only one attached switch - find a best/efficient way to take it
+			} 
+			
+			
+			ArrayList<SwitchPort> vals = 
+	                new ArrayList<SwitchPort>(2);
+	
+	        vals.add(srcSwitch);
+	        vals.add(dstSwitch);
+	        return vals;
+			
 		}
 		
 		
@@ -1250,34 +1286,113 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			//TODO: Corrigir: problema: todos hosts tem que dar um ping na rede para o floodlight cadastrar seu IP
 			//Isso altera as regras aplicadas aos roteadores (verificar)
 			
-			SwitchPort[] switches;
+			ArrayList<SwitchPort> srcDstSwitches = 
+	                new ArrayList<SwitchPort>(2);
 			SwitchPort srcSwitch = null;
 			SwitchPort dstSwitch = null;
-			Iterator<? extends IDevice> devIter = deviceManagerService.queryDevices(MacAddress.NONE, null, appReq.getSrcIP(), IPv6Address.NONE, DatapathId.NONE, OFPort.ZERO);
 			
-			if(devIter.hasNext()){
-				switches = devIter.next().getAttachmentPoints();
-				for (SwitchPort srcsw : switches) {
-					srcSwitch=srcsw;
-				} //TODO: Take only one attached switch - find a best/efficient way to take one
-			} 
+			srcDstSwitches = getSrcDstSwitchByIP(appReq.getSrcIP(), appReq.getDstIP());
 			
-			devIter = deviceManagerService.queryDevices(MacAddress.NONE, null, appReq.getDstIP(), IPv6Address.NONE, DatapathId.NONE, OFPort.ZERO);
-			if(devIter.hasNext()){
-				switches = devIter.next().getAttachmentPoints();
-				for (SwitchPort dstsw : switches) {
-					dstSwitch=dstsw;
-				} //TODO: Take only one attached switch - find a best/efficient way to take it
-			} 
+			srcSwitch = srcDstSwitches.get(0);
+			dstSwitch = srcDstSwitches.get(1);
 			
 			Path newPath = null;
 			if ((srcSwitch!=null) & (dstSwitch!=null)){
 				newPath = routingEngineService.getPath(srcSwitch.getNodeId(), srcSwitch.getPortId(), dstSwitch.getNodeId(), dstSwitch.getPortId(), PATH_METRIC.LATENCY);
-				log.info("Latencia da nova rota {}", newPath.getLatency());
+				//newPath = routingEngineService.getPath(srcSwitch.getNodeId(), dstSwitch.getNodeId(), PATH_METRIC.LATENCY);
+				log.info("path low latency inserted {}", newPath);
 				
 			}
-			log.info("Nova Latencia {}", newPath);
 			return newPath;
+		}
+		
+		
+		
+		/**
+         * Applies a Path with lower latency than the original if its possible 
+         * Push the packet that originate this call
+         *
+         * @param  
+         * @return true if new Path and Package was applied.
+         */
+		private boolean applyLowerLatencyPath(AppReq appReq, OFPacketIn pi,FloodlightContext cntx){
+			//Path originalPath = routingService.getPath(srcSwitch.getNodeId(), srcSwitch.getPortId(), dstSwitch.getNodeId(), dstSwitch.getPortId());
+			//TODO: Latencia retorna null quando o getPath e calculado com 4 parametros (se corrigir em topology o ping nao funciona mais)
+			//Path originalPath = routingService.getPath(appReq.getSrcId(), appReq.getSrcPort(), appReq.getDstId(), appReq.getDstPort());
+			Path originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getDstId());
+
+			U64 originalLatency = originalPath.getLatency();
+
+			if (originalLatency != null){
+				if (originalLatency.getValue() > appReq.getMax()){
+					log.info("Path Atual {}", originalPath);
+					log.info("Latencia da Rota Original {}", originalLatency.getValue());
+					log.info("Trying to Set new latency.................");
+
+					Path newPath = getLowerPathLatency(appReq);
+					log.info("Latencia da Rota Nova {}", newPath.getLatency());
+					//TODO: verificar ao comparar rota original e nova, pois a nova eh calculada da porta
+					//de inicio a porta fim, jah a rota original, descatar a 1a e ultima porta (getPath(src, dst) retorna a latencia, mas getpath(src,dst,srcport, dstport) nao retorna latencia)
+					//if (!originalPath.equals(newPath) & newPath!=null){
+					if (newPath!=null){ //only to tests 
+						boolean toReturn = pushRoute(newPath, appReq);
+						log.info("A nova rota foi escrita {} com latencia {}", toReturn, newPath.getLatency());
+						IOFSwitch sw = switchService.getSwitch(appReq.getSrcId());
+						pushPacket(sw, pi, newPath.getPath().get(0).getPortId(), false, cntx);
+						return toReturn;
+						//} else {
+						//log.info("There are no lower delay path/route.{}", iotRouting);
+						//}
+					}
+				} 
+
+				//topologyService.getAllLinks();
+				//linkDiscoveryService.getLinkInfo(l);			
+			}
+			return false;
+		}
+		
+		
+		/**
+         * Applies a Path with lower latency than the original if its possible 
+         *
+         * @param  
+         * @return true if new Path and Package was applied.
+         */
+		@Override
+		public boolean applyLowerLatencyPath(AppReq appReq){
+			//Path originalPath = routingService.getPath(srcSwitch.getNodeId(), srcSwitch.getPortId(), dstSwitch.getNodeId(), dstSwitch.getPortId());
+			//TODO: Latencia retorna null quando o getPath e calculado com 4 parametros (se corrigir em topology o ping nao funciona mais)
+			//Path originalPath = routingService.getPath(appReq.getSrcId(), appReq.getSrcPort(), appReq.getDstId(), appReq.getDstPort());
+			Path originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getDstId());
+
+			U64 originalLatency = originalPath.getLatency();
+			//log.info("Latencia da rota antiga {}", originalPath.getLatency());
+			
+			//TODO: verificar ao comparar rota original e nova, pois a nova eh calculada da porta
+			//de inicio a porta fim, jah a rota original, descatar a 1a e ultima porta (getPath(src, dst) retorna a latencia, mas getpath(src,dst,srcport, dstport) nao retorna latencia)
+			if (originalLatency != null){
+				if (originalLatency.getValue() > appReq.getMax()){
+					log.info("Path Atual {}", originalPath);
+					log.info("Latencia Atual {}", originalLatency.getValue());
+					log.info("Trying to Set new latency.................");
+
+					Path newPath = getLowerPathLatency(appReq);
+
+					if(newPath.getLatency().getValue() < appReq.getMax()){
+						//if (!originalPath.equals(newPath) & newPath!=null){
+						//if (newPath!=null){ //only to tests 
+						return pushRoute(newPath, appReq);
+					} else {
+						log.info("There are no lower delay path/route.");
+					}
+				}
+			} 
+
+				//topologyService.getAllLinks();
+				//linkDiscoveryService.getLinkInfo(l);			
+			
+			return false;
 		}
 		
 		@Override
@@ -1313,55 +1428,49 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 							//log.info("All Topics  {}", topics);
 							
 							if (topics.contains(topic)){
-								//log.info("Mqtt Topic Publish {}", mPublish.getTopicName());
+								log.info("Mqtt Topic Publish {}", mPublish.getTopicName());
 								//log.info("Mqtt All Topics {}",topicReqService.getAllTopics());
 								TopicReq topicReq = topicReqService.getTopicReqFromTopic(topic);
 																
-								//TODO: codigo duplicado. Colocar em um metodo de IoTRouting
-								SwitchPort[] switches;
+
+								ArrayList<SwitchPort> srcDstSwitches = 
+						                new ArrayList<SwitchPort>(2);
 								SwitchPort srcSwitch = null;
 								SwitchPort dstSwitch = null;
-								Iterator<? extends IDevice> devIter = deviceManagerService.queryDevices(MacAddress.NONE, null, ipv4.getSourceAddress(), IPv6Address.NONE, DatapathId.NONE, OFPort.ZERO);
 								
-								if(devIter.hasNext()){
-									switches = devIter.next().getAttachmentPoints();
-									for (SwitchPort srcsw : switches) {
-										srcSwitch=srcsw;
-									} //TODO: Take only one attached switch - find a best/efficient way to take one
-								} 
+								srcDstSwitches = getSrcDstSwitchByIP(ipv4.getSourceAddress(), ipv4.getDestinationAddress());
 								
-								devIter = deviceManagerService.queryDevices(MacAddress.NONE, null, ipv4.getDestinationAddress(), IPv6Address.NONE, DatapathId.NONE, OFPort.ZERO);
-								if(devIter.hasNext()){
-									switches = devIter.next().getAttachmentPoints();
-									for (SwitchPort dstsw : switches) {
-										dstSwitch=dstsw;
-									} //TODO: Take only one attached switch - find a best/efficient way to take it
-								} 
+								srcSwitch = srcDstSwitches.get(0);
+								dstSwitch = srcDstSwitches.get(1);
+								
+								int adaptationRateType = 2;
 								
 								//Calculates Path and put in appReq
 								//TODO: Verificar se nao encontrou valores/switches
 								if ((srcSwitch!=null) & (dstSwitch!=null)){
-									//AppReq appReq = new AppReq(topic+appReqService.updateIndex(), topic, 
-									AppReq appReq = new AppReq(topic+appReqService.updateIndex(), topic, 
+									AppReq appReq = new AppReq(topic, topic, 
+									//AppReq appReq = new AppReq(topic, topic, 
 											ipv4.getSourceAddress(), ipv4.getDestinationAddress(),
 											srcSwitch.getNodeId(), dstSwitch.getNodeId(), 
 											srcSwitch.getPortId(), dstSwitch.getPortId(),
 											tcp.getSourcePort(), tcp.getDestinationPort(), 
-											topicReq.getMin(), topicReq.getMax(), 2, topicReq.getTimeout());
+											topicReq.getMin(), topicReq.getMax(), adaptationRateType, topicReq.getTimeout());
 
-									log.info("Inserido este appReq no IoTRouting {}", appReq.toString());
-									appReqService.addAppReq(AppReqPusher.TABLE_NAME, appReq);
-									//TODO: verificar se o pacote nao foi reenviado para o roteador para encaminhamento antes da nova rota ser aplicada
-									/* Use the buffered packet at the switch, if there's one stored */
+									if (appReqService.contains(appReq)){
+										log.error("Esta appReq {}  ja esta na lista", appReq.toString());
+									} else {
+										log.info("Inserido este appReq no IoTRouting {}", appReq.toString());
+										appReq.setName(topic+appReqService.updateIndex());
+										appReqService.addAppReq(AppReqPusher.TABLE_NAME, appReq);
+
+										//TODO: verificar se o pacote nao foi reenviado para o roteador para encaminhamento antes da nova rota ser aplicada
+										/* Use the buffered packet at the switch, if there's one stored */
+
+										if (adaptationRateType==2)
+											if (applyLowerLatencyPath(appReq, (OFPacketIn) msg, cntx))
+												return Command.STOP;
+									}
 									
-//							         * @param sw switch that generated the packet-in, and from which packet-out is sent
-//							         * @param pi packet-in
-//							         * @param outport output port
-//							         * @param useBufferedPacket use the packet buffered at the switch, if possible
-//							         * @param cntx context of the packet
-									//IOFSwitch sw, OFPacketIn pi, OFPort outport, boolean useBufferedPacket, FloodlightContext cntx
-				                    //pushPacket(sw, pi, outPort, true, cntx); 
-
 								}
 								
 							} //Se nao ha o topico na lista, prosseguir encaminhamento convencional
@@ -1405,8 +1514,8 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 
 		@Override
 		public boolean isCallbackOrderingPostreq(OFType type, String name) {
-			// TODO Auto-generated method stub
-			return false;
+			//If its a IoT MQTT packet, it will processed only by IoTRouting, with forwarding actions
+			return (type.equals(OFType.PACKET_IN) && name.equals("forwarding"));
 		}
 
 		@Override

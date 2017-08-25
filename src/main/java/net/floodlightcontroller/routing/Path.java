@@ -114,7 +114,7 @@ public class Path implements Comparable<Path> {
         return this.latency; 
     }
     
-    /*
+    /**
      * @return List<NodePortTuple>
      * It's useful to calculates the bidirectional route
      */

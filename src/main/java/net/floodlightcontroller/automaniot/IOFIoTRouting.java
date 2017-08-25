@@ -20,14 +20,15 @@ public interface IOFIoTRouting extends IFloodlightService {
 	
 	Match createReverseMatch(IOFSwitch sw, OFPort inPort, AppReq appReq, String protocol);
 	
-	boolean pushRoute(Path route, Match match,
-            DatapathId pinSwitch, U64 cookie,
-            boolean requestFlowRemovedNotification, OFFlowModCommand flowModCommand, boolean bidirectional);
-	
 	boolean setLowerLatencyPath(Path oldPath, IOFSwitchService switchService, AppReq appReq);
 	
 	Path getLowerPathLatency(AppReq appReq);
 
 	boolean pushRoute(Path path, AppReq appReq);
+
+	boolean pushRoute(Path route, Match match, DatapathId pinSwitch, U64 cookie, boolean requestFlowRemovedNotification,
+			OFFlowModCommand flowModCommand);
+
+	boolean applyLowerLatencyPath(AppReq appReq);
 	
 }

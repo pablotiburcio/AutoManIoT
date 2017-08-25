@@ -1293,7 +1293,7 @@ public class TopologyInstance {
             DatapathId dstId, OFPort dstPort, PATH_METRIC pm) {
         Path r = getPath(srcId, dstId, pm);
         
-        /* Path cannot be null, but empty b/t 2 diff DPIDs -> not found */
+        /* Origem diferente de destino E rota vazia */
         if (! srcId.equals(dstId) && r.getPath().isEmpty()) {
             return r;
         }
@@ -1305,17 +1305,22 @@ public class TopologyInstance {
         npt = new NodePortTuple(dstId, dstPort);
         nptList.add(npt); // add dst port to the end
 
+
         PathId id = new PathId(srcId, dstId);
 
-        try {
-            if (!pathcache.get(id).isEmpty()) {
-                r = pathcache.get(id).get(0);
-            }
-        } catch (Exception e) {
-            log.warn("Could not find route from {} to {}. If the path exists, wait for the topology to settle, and it will be detected", srcId, dstId);
-        }
+        //TODO: Fazer um pathcache para a metrica Latency
+//        try {
+//            if (!pathcache.get(id).isEmpty()) {
+//                r = pathcache.get(id).get(0);
+//            }
+//        } catch (Exception e) {
+//            log.warn("Could not find route from {} to {}. If the path exists, wait for the topology to settle, and it will be detected", srcId, dstId);
+//        }
+
+        Path toReturn = new Path(id, nptList);
+        toReturn.setLatency(r.getLatency());
         
-        return r == null ? new Path(id, ImmutableList.of()) : r;
+        return toReturn;
 
     }
 
