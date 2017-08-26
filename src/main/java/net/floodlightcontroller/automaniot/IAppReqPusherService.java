@@ -35,10 +35,10 @@ public interface IAppReqPusherService extends IFloodlightService {
 	
 	public Set<String> getAllTopics();
 
-	public boolean contains(AppReq appReq);
+	public boolean containsValue(AppReq appReq);
+	
+	public boolean containsKey(String key);
 
 	void addAppReq(String name, AppReq appReq);
 	
-	public int updateIndex();
-
 }

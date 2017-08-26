@@ -33,9 +33,9 @@ public abstract class AbstractMessage {
     protected byte m_messageType;
 
     public byte getMessageType() {
-        return m_messageType;
+    	return m_messageType;
     }
-
+    
     public void setMessageType(byte messageType) {
         this.m_messageType = messageType;
     }

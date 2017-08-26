@@ -67,4 +67,22 @@ public class MQTTDecoder extends ByteToMessageDecoder {
     	 return messageType;
          
     }
+    
+    public String getMessageTypeName() {
+        
+        return  messageType==1 ? "CONNECT": 
+        	messageType==2 ? "CONNACK": 
+        	messageType==3 ? "PUBLISH":
+        	messageType==4 ? "PUBACK":
+        	messageType==5 ? "PUBREC":
+        	messageType==6 ? "PUBREL":
+        	messageType==7 ? "PUBCOMP":
+        	messageType==8 ? "SUBSCRIBE":
+        	messageType==9 ? "SUBACK":
+        	messageType==10 ? "UNSUBSCRIBE":
+        	messageType==11 ? "UNSUBACK":
+        	messageType==12 ? "PINGREQ":
+        	messageType==13 ? "PINGRESP": "DISCONNECT";
+     
+    }
 }

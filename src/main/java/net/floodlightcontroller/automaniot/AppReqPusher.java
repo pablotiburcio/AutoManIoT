@@ -34,8 +34,6 @@ public class AppReqPusher
 implements IFloodlightModule, IStorageSourceListener, IAppReqPusherService {
 	protected static Logger log = LoggerFactory.getLogger(AppReqPusher.class);
 	public static final String MODULE_NAME = "appreqpusher";
-
-	private int appReqIndex=0; //correct it
 	
 	public static final int STATIC_ENTRY_APP_ID = 10;
 	//static {
@@ -76,16 +74,15 @@ implements IFloodlightModule, IStorageSourceListener, IAppReqPusherService {
 	@Override
 	public void addAppReq(String name, AppReq appReq) {
 		try {
-			if (!appReqFromStorage.containsValue(appReq)){
-				Map<String, Object> map = AppReqEntries.appReqToStorageEntry(appReq);
-				storageSourceService.insertRowAsync(TABLE_NAME, map);
-				appReqIndex++;
-				appReqFromStorage = readAppReqFromStorage();
-			} else { log.error("AppReq was already inserted {}", appReq.toString());}
+
+			Map<String, Object> map = AppReqEntries.appReqToStorageEntry(appReq);
+			storageSourceService.insertRowAsync(TABLE_NAME, map);
+			appReqFromStorage = readAppReqFromStorage();
+
 		} catch (Exception e) {
 			log.error("Did not add AppReq with bad match/action combination. {}", appReq.toString());
 		}
-		
+
 	}
 
 	@Override
@@ -109,8 +106,14 @@ implements IFloodlightModule, IStorageSourceListener, IAppReqPusherService {
 	}
 	
 	@Override
-	public boolean contains(AppReq appReq){
+	public boolean containsValue(AppReq appReq){
+		//log.info("valores na lista de appReq cadastrados:{}", appReqFromStorage.values().toString());
 		return appReqFromStorage.containsValue(appReq);
+	}
+	
+	@Override
+	public boolean containsKey(String key){
+		return appReqFromStorage.containsKey(key);
 	}
 
 	@Override
@@ -274,11 +277,5 @@ implements IFloodlightModule, IStorageSourceListener, IAppReqPusherService {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
-	@Override
-	public int updateIndex(){
-		return appReqIndex++;
-	}
-
 
 }

@@ -1300,7 +1300,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			if ((srcSwitch!=null) & (dstSwitch!=null)){
 				newPath = routingEngineService.getPath(srcSwitch.getNodeId(), srcSwitch.getPortId(), dstSwitch.getNodeId(), dstSwitch.getPortId(), PATH_METRIC.LATENCY);
 				//newPath = routingEngineService.getPath(srcSwitch.getNodeId(), dstSwitch.getNodeId(), PATH_METRIC.LATENCY);
-				log.info("path low latency inserted {}", newPath);
+				//log.info("path low latency inserted {}", newPath);
 				
 			}
 			return newPath;
@@ -1325,24 +1325,27 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 
 			if (originalLatency != null){
 				if (originalLatency.getValue() > appReq.getMax()){
-					log.info("Path Atual {}", originalPath);
-					log.info("Latencia da Rota Original {}", originalLatency.getValue());
+					//log.info("Path Atual {}", originalPath);
+					//log.info("Latencia da Rota Original {}", originalLatency.getValue());
 					log.info("Trying to Set new latency.................");
 
 					Path newPath = getLowerPathLatency(appReq);
-					log.info("Latencia da Rota Nova {}", newPath.getLatency());
+					//log.info("Latencia da Rota Nova {}", newPath.getLatency());
 					//TODO: verificar ao comparar rota original e nova, pois a nova eh calculada da porta
 					//de inicio a porta fim, jah a rota original, descatar a 1a e ultima porta (getPath(src, dst) retorna a latencia, mas getpath(src,dst,srcport, dstport) nao retorna latencia)
 					//if (!originalPath.equals(newPath) & newPath!=null){
-					if (newPath!=null){ //only to tests 
+					//if (newPath!=null){ //only to tests 
+					if(newPath.getLatency().getValue() < appReq.getMax()){ //TODO: Verificar a eficiencia 
+					//TODO: Ou mesmo que a nova latencia ainda seja mais alta que max, se ela for menor que a latencia da rota antiga, substitui-la
+					//if(newPath.getLatency().getValue()<originalLatency.getValue())
+
 						boolean toReturn = pushRoute(newPath, appReq);
 						log.info("A nova rota foi escrita {} com latencia {}", toReturn, newPath.getLatency());
 						IOFSwitch sw = switchService.getSwitch(appReq.getSrcId());
 						pushPacket(sw, pi, newPath.getPath().get(0).getPortId(), false, cntx);
 						return toReturn;
-						//} else {
-						//log.info("There are no lower delay path/route.{}", iotRouting);
-						//}
+					} else {
+						log.info("There are no lower delay path/route.");
 					}
 				} 
 
@@ -1372,15 +1375,14 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			//TODO: verificar ao comparar rota original e nova, pois a nova eh calculada da porta
 			//de inicio a porta fim, jah a rota original, descatar a 1a e ultima porta (getPath(src, dst) retorna a latencia, mas getpath(src,dst,srcport, dstport) nao retorna latencia)
 			if (originalLatency != null){
-				if (originalLatency.getValue() > appReq.getMax()){
-					log.info("Path Atual {}", originalPath);
-					log.info("Latencia Atual {}", originalLatency.getValue());
+				if (originalLatency.getValue() > appReq.getMax()){ 
+					//log.info("Path Atual {}", originalPath);
+					//log.info("Latencia Atual {}", originalLatency.getValue());
 					log.info("Trying to Set new latency.................");
 
 					Path newPath = getLowerPathLatency(appReq);
 
-					if(newPath.getLatency().getValue() < appReq.getMax()){
-						//if (!originalPath.equals(newPath) & newPath!=null){
+					if(newPath.getLatency().getValue() < appReq.getMax()){ //TODO: Verificar a eficiencia
 						//if (newPath!=null){ //only to tests 
 						return pushRoute(newPath, appReq);
 					} else {
@@ -1404,21 +1406,24 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			
 			if (MqttUtils.isMqttMessage(eth)){
 				IPv4 ipv4 = (IPv4) eth.getPayload();
-				log.info("IP src ip {}, dst ip {}", ipv4.getSourceAddress(), ipv4.getDestinationAddress());
 				TCP tcp = (TCP) ipv4.getPayload();
 				
 				MQTTDecoder mdecoder = new MQTTDecoder();
 				List<Object> m_results;
 				m_results = new ArrayList<Object >();
+				
+				log.info("IP src ip {}, dst ip {}", ipv4.getSourceAddress(), ipv4.getDestinationAddress()+ " "+mdecoder.getMessageTypeName());
+				//log.info("Mensagem do tipo {}", mdecoder.getMessageTypeName());
+
 
 				ByteBuf m_buffer = Unpooled.copiedBuffer(eth.getPayload().getPayload().getPayload().serialize());
 				try {
 					mdecoder.decode(null, m_buffer, m_results);
 					if (!m_results.isEmpty()){ 
-						//mqttMessageType = m_results.get(0);
-						log.info("byte type {}", mdecoder.getMessageType());
+						log.info("IP src ip {}, dst ip {}", ipv4.getSourceAddress(), ipv4.getDestinationAddress()+ " "+mdecoder.getMessageTypeName());
+						//log.info("Mensagem do tipo {}", mdecoder.getMessageTypeName());
 						switch (mdecoder.getMessageType()){
-						//TODO: Logic from Lazy Method
+						//TODO: tratar todos os tipos de mensagens MQTT	
 						case AbstractMessage.PUBLISH : 
 							PublishMessage mPublish = (PublishMessage) m_results.get(0);
 							mqttMessageType = mPublish;
@@ -1428,7 +1433,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 							//log.info("All Topics  {}", topics);
 							
 							if (topics.contains(topic)){
-								log.info("Mqtt Topic Publish {}", mPublish.getTopicName());
+								//log.info("Mqtt Topic Publish {}", mPublish.getTopicName());
 								//log.info("Mqtt All Topics {}",topicReqService.getAllTopics());
 								TopicReq topicReq = topicReqService.getTopicReqFromTopic(topic);
 																
@@ -1449,30 +1454,41 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 								//TODO: Verificar se nao encontrou valores/switches
 								if ((srcSwitch!=null) & (dstSwitch!=null)){
 									AppReq appReq = new AppReq(topic, topic, 
-									//AppReq appReq = new AppReq(topic, topic, 
+											//AppReq appReq = new AppReq(topic, topic, 
 											ipv4.getSourceAddress(), ipv4.getDestinationAddress(),
 											srcSwitch.getNodeId(), dstSwitch.getNodeId(), 
 											srcSwitch.getPortId(), dstSwitch.getPortId(),
 											tcp.getSourcePort(), tcp.getDestinationPort(), 
 											topicReq.getMin(), topicReq.getMax(), adaptationRateType, topicReq.getTimeout());
 
-									if (appReqService.contains(appReq)){
+									//log.info("AppReq criada {}", appReq.toString());
+									//log.info("appReqService.contains(appReq) = {}", appReqService.containsValue(appReq));
+									//TODO: Verify the eficiency
+									if (appReqService.containsValue(appReq)){ //if appReq is already in list (compared with specific hashcode in AppReq)
 										log.error("Esta appReq {}  ja esta na lista", appReq.toString());
-									} else {
-										log.info("Inserido este appReq no IoTRouting {}", appReq.toString());
-										appReq.setName(topic+appReqService.updateIndex());
-										appReqService.addAppReq(AppReqPusher.TABLE_NAME, appReq);
+									} else {// TODO: verificar a eficiencia
+										
+										appReqService.addAppReq(AppReqPusher.TABLE_NAME, appReq); //insert to monitoring
 
-										//TODO: verificar se o pacote nao foi reenviado para o roteador para encaminhamento antes da nova rota ser aplicada
-										/* Use the buffered packet at the switch, if there's one stored */
-
-										if (adaptationRateType==2)
-											if (applyLowerLatencyPath(appReq, (OFPacketIn) msg, cntx))
+										if (adaptationRateType==2){
+											//If it applied the new path, don't forward packet
+											if (applyLowerLatencyPath(appReq, (OFPacketIn) msg, cntx)){
+												log.info("-------------------COMMAND STOP ---- msg foi reenviada pelo IoTRouting, havia nova rota");
 												return Command.STOP;
+											} else {
+												log.info("-------------------COMMAND CONTINUE ---- msg nao foi reenviada pelo IoTRouting e sim por Forwarding, nao havia nova rotas");
+												return Command.CONTINUE;
+											}
+										}
+										
 									}
+									//TODO: verificar se o pacote nao foi reenviado para o roteador para encaminhamento antes da nova rota ser aplicada
+									/* Use the buffered packet at the switch, if there's one stored */
+
 									
+
 								}
-								
+
 							} //Se nao ha o topico na lista, prosseguir encaminhamento convencional
 
 							

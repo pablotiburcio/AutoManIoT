@@ -248,8 +248,9 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	    tcp.setSourcePort(1883);
 	    tcp.setDestinationPort(0);
 	    //Insert a AppReq with continuous adaptation rate - null to dispense
-//	    AppReq ar = new AppReq("aloha", "medical", ipv4.getSourceAddress(), ipv4.getDestinationAddress(), DatapathId.of(5L), DatapathId.of(6L),
-//	    		OFPort.of(1), OFPort.of(1), tcp.getSourcePort(), tcp.getDestinationPort(), 1, 5, 1, 10);
+//	    AppReq ar = new AppReq("aloha", "medical", ipv4.getSourceAddress(), ipv4.getDestinationAddress(),
+//				    DatapathId.of(5L), DatapathId.of(6L),
+//	    			OFPort.of(1), OFPort.of(1), tcp.getSourcePort(), tcp.getDestinationPort(), 1, 5, 1, 10);
 //	    log.info(ar.toString());
 //		appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
 		
