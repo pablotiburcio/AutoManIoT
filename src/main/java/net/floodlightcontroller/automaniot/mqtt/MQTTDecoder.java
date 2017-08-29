@@ -34,8 +34,8 @@ public class MQTTDecoder extends ByteToMessageDecoder {
        //m_decoderMap.put(AbstractMessage.SUBACK, new SubAckDecoder());
        m_decoderMap.put(AbstractMessage.UNSUBSCRIBE, new UnsubscribeDecoder());
        //m_decoderMap.put(AbstractMessage.DISCONNECT, new DisconnectDecoder());
-       //m_decoderMap.put(AbstractMessage.PINGREQ, new PingReqDecoder());
-       //m_decoderMap.put(AbstractMessage.PINGRESP, new PingRespDecoder());
+       m_decoderMap.put(AbstractMessage.PINGREQ, new PingReqDecoder());
+       m_decoderMap.put(AbstractMessage.PINGRESP, new PingRespDecoder());
        m_decoderMap.put(AbstractMessage.UNSUBACK, new UnsubAckDecoder());
        //m_decoderMap.put(AbstractMessage.PUBCOMP, new PubCompDecoder());
        //m_decoderMap.put(AbstractMessage.PUBREC, new PubRecDecoder());
@@ -82,7 +82,8 @@ public class MQTTDecoder extends ByteToMessageDecoder {
         	messageType==10 ? "UNSUBSCRIBE":
         	messageType==11 ? "UNSUBACK":
         	messageType==12 ? "PINGREQ":
-        	messageType==13 ? "PINGRESP": "DISCONNECT";
+        	messageType==13 ? "PINGRESP": 
+        	messageType==14 ? "DISCONNECT" : "NO_MQTT";
      
     }
 }

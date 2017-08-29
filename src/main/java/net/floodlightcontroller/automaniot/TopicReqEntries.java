@@ -49,7 +49,8 @@ public class TopicReqEntries {
 	 * Turns a JSON formatted TOPIC Requisites string into a storage entry
 	 * Expects a string in JSON along the lines of:
 	 *        {
-	 *            "topic":        "healthcare",        
+	 *            "topic":        "healthcare",    
+	 *            "requisite":    "1",    
 	 *            "min":          "80",
 	 *            "max":          "80",
 	 *            "time_out":     "80",
@@ -92,10 +93,11 @@ public class TopicReqEntries {
 	
 	public static Map<String, Object> topicReqToStorageEntry(TopicReq topicReq){
 		Map<String, Object> entry = new HashMap<String, Object>();
-		entry.put(AppReqPusher.Columns.COLUMN_TOPIC, topicReq.getTopic());
-		entry.put(AppReqPusher.Columns.COLUMN_MIN, Integer.toString(topicReq.getMin()));
-		entry.put(AppReqPusher.Columns.COLUMN_MAX, Integer.toString(topicReq.getMax()));
-		entry.put(AppReqPusher.Columns.COLUMN_TIME_OUT, Integer.toString(topicReq.getTimeout()));
+		entry.put(TopicReqPusher.Columns.COLUMN_TOPIC, topicReq.getTopic());
+		entry.put(TopicReqPusher.Columns.COLUMN_REQUISITE, Integer.toString(topicReq.getRequisite()));
+		entry.put(TopicReqPusher.Columns.COLUMN_MIN, Integer.toString(topicReq.getMin()));
+		entry.put(TopicReqPusher.Columns.COLUMN_MAX, Integer.toString(topicReq.getMax()));
+		entry.put(TopicReqPusher.Columns.COLUMN_TIME_OUT, Integer.toString(topicReq.getTimeout()));
 
 		return entry;
 

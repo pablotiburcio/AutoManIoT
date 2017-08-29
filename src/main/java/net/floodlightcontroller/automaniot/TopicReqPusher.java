@@ -49,6 +49,7 @@ public class TopicReqPusher
 		//add new values in net.floodlightcontroller.core.web.serializers.TopicReqMapSerializer
 		public static class Columns {
 			public static final String COLUMN_TOPIC = "topic";
+			public static final String COLUMN_REQUISITE = "requisite";
 			public static final String COLUMN_MIN = "min";
 			public static final String COLUMN_MAX = "max";
 			public static final String COLUMN_TIME_OUT = "time_out";
@@ -137,6 +138,7 @@ public class TopicReqPusher
 		private void populateColumns() {
 			Set<String> tmp = new HashSet<String>();
 			tmp.add(Columns.COLUMN_TOPIC);
+			tmp.add(Columns.COLUMN_REQUISITE);
 			tmp.add(Columns.COLUMN_MIN);
 			tmp.add(Columns.COLUMN_MAX);
 			tmp.add(Columns.COLUMN_TIME_OUT);
@@ -151,9 +153,10 @@ public class TopicReqPusher
 			int min = Integer.valueOf((String)row.get(Columns.COLUMN_MIN));
 			int max = Integer.valueOf((String)row.get(Columns.COLUMN_MAX));
 			int timeout = Integer.valueOf((String)row.get(Columns.COLUMN_TIME_OUT));
+			int requisite = Integer.valueOf((String)row.get(Columns.COLUMN_REQUISITE));
 			String topic = (String)row.get(Columns.COLUMN_TOPIC);
 
-			TopicReq reqTable = new TopicReq(topic, min, max, timeout);
+			TopicReq reqTable = new TopicReq(topic, requisite, min, max, timeout);
 			topicReqs.put((String) row.get(Columns.COLUMN_TOPIC), reqTable);
 		}
 		

@@ -2,13 +2,24 @@ package net.floodlightcontroller.automaniot;
 
 public class TopicReq {
 	private String topic;
-	private int min,max,timeout;
+	private int min,max,timeout, requisite;
 	
-	public TopicReq(String topic, int min, int max, int timeout){
+	/*
+	 * TODO: Put requisite a Map or Static attribute
+	 * Requisite = 1 -> delay/latency
+	 * Requisite = 2 -> bandwidth
+	 * Requisite = 3 -> mobility
+	 * Requisite = 4 -> priority
+	 * Requisite = 5 -> security
+	 * Requisite = 6 -> reliability
+	 */
+	
+	public TopicReq(String topic, int requisite, int min, int max, int timeout){
 		this.topic = topic;
 		this.min = min;
 		this.max = max;
 		this.timeout = timeout;
+		this.setRequisite(requisite);
 	}
 
 	public String getTopic() {
@@ -45,8 +56,17 @@ public class TopicReq {
 
 	public String toString(){
 		return  this.topic + " " +
+				this.requisite + " " +
 				this.min + " " +
 				this.max + " " +
 				this.timeout;
+	}
+
+	public int getRequisite() {
+		return requisite;
+	}
+
+	public void setRequisite(int requisite) {
+		this.requisite = requisite;
 	}
 }

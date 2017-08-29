@@ -51,6 +51,8 @@ import io.netty.buffer.Unpooled;
 import net.floodlightcontroller.automaniot.mqtt.AbstractMessage;
 import net.floodlightcontroller.automaniot.mqtt.MQTTDecoder;
 import net.floodlightcontroller.automaniot.mqtt.MqttUtils;
+import net.floodlightcontroller.automaniot.mqtt.PingReqMessage;
+import net.floodlightcontroller.automaniot.mqtt.PingRespMessage;
 import net.floodlightcontroller.automaniot.mqtt.PublishMessage;
 import net.floodlightcontroller.automaniot.mqtt.SubscribeMessage;
 import net.floodlightcontroller.automaniot.mqtt.UnsubAckMessage;
@@ -693,7 +695,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 
 			pushRoute(path, m, sw.getId(), cookie,
 					requestFlowRemovedNotifn,
-					OFFlowModCommand.ADD);	
+					OFFlowModCommand.ADD, FLOWMOD_DEFAULT_HARD_TIMEOUT);	
 			/*pushRoute(path, m, pi, sw.getId(), cookie, 
 					cntx, requestFlowRemovedNotifn,
 					OFFlowModCommand.ADD);*/
@@ -725,7 +727,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 	@Override
         public boolean pushRoute(Path route, Match match,
                 DatapathId pinSwitch, U64 cookie,
-                boolean requestFlowRemovedNotification, OFFlowModCommand flowModCommand) {
+                boolean requestFlowRemovedNotification, OFFlowModCommand flowModCommand, int hardTimeOut) {
 
             boolean packetOutSent = false;
             
@@ -789,7 +791,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 
                 fmb.setMatch(mb.build())
                 .setIdleTimeout(FLOWMOD_DEFAULT_IDLE_TIMEOUT)
-                .setHardTimeout(FLOWMOD_DEFAULT_HARD_TIMEOUT)
+                .setHardTimeout(hardTimeOut)
                 .setBufferId(OFBufferId.NO_BUFFER)
                 .setCookie(cookie)
                 .setOutPort(outPort)
@@ -828,15 +830,15 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
                 }
 
                 /* Push the packet out the first hop switch */
-                if (sw.getId().equals(pinSwitch) &&
-                        !fmb.getCommand().equals(OFFlowModCommand.DELETE) &&
-                        !fmb.getCommand().equals(OFFlowModCommand.DELETE_STRICT)) {
-                    /* Use the buffered packet at the switch, if there's one stored */
+//                if (sw.getId().equals(pinSwitch) &&
+//                        !fmb.getCommand().equals(OFFlowModCommand.DELETE) &&
+//                        !fmb.getCommand().equals(OFFlowModCommand.DELETE_STRICT)) {
+//                    /* Use the buffered packet at the switch, if there's one stored */
 //                    if (pushPacket){
 //                		pushPacket(sw, pi, outPort, true, cntx); //in continuous adaptation rate there are no packets to write
 //                    	packetOutSent = true;
 //                    }
-                }
+//                }
             }
 
             return packetOutSent;
@@ -909,7 +911,6 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
         	
         	mb.setExact(MatchField.IPV4_SRC, appReq.getSrcIP());
         	mb.setExact(MatchField.IPV4_DST, appReq.getDstIP());
-        	
         	
         	
         	if (protocol == "ip"){ //TODO: put it in an organized way
@@ -1239,12 +1240,12 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			Match reverseMatchArp = createReverseMatch(lastSwitch, appReq.getDstPort(), appReq, "arp");
 			OFFlowModCommand flowModCommand = OFFlowModCommand.ADD;
 			
-			//push route and don't send packet
+			//push route but don't send packet
 			boolean toReturn;
-			toReturn = pushRoute(path, matchIP, appReq.getSrcId(), U64.of(0L), false, flowModCommand);
-			toReturn = toReturn && pushRoute(reversePath, reverseMatchIP ,appReq.getDstId(), U64.of(0L), false, flowModCommand);
-			toReturn = toReturn && pushRoute(path, matchARP, appReq.getSrcId(), U64.of(0L), false, flowModCommand);
-			toReturn = toReturn && pushRoute(reversePath, reverseMatchArp, appReq.getDstId(), U64.of(0L), false, flowModCommand);
+			toReturn = pushRoute(path, matchIP, appReq.getSrcId(), U64.of(0L), false, flowModCommand, appReq.getTimeout());
+			toReturn = toReturn && pushRoute(reversePath, reverseMatchIP ,appReq.getDstId(), U64.of(0L), false, flowModCommand, appReq.getTimeout());
+			toReturn = toReturn && pushRoute(path, matchARP, appReq.getSrcId(), U64.of(0L), false, flowModCommand, appReq.getTimeout());
+			toReturn = toReturn && pushRoute(reversePath, reverseMatchArp, appReq.getDstId(), U64.of(0L), false, flowModCommand, appReq.getTimeout());
 
 			return toReturn;
 		}
@@ -1334,9 +1335,8 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 					//TODO: verificar ao comparar rota original e nova, pois a nova eh calculada da porta
 					//de inicio a porta fim, jah a rota original, descatar a 1a e ultima porta (getPath(src, dst) retorna a latencia, mas getpath(src,dst,srcport, dstport) nao retorna latencia)
 					//if (!originalPath.equals(newPath) & newPath!=null){
-					//if (newPath!=null){ //only to tests 
-					if(newPath.getLatency().getValue() < appReq.getMax()){ //TODO: Verificar a eficiencia 
-					//TODO: Ou mesmo que a nova latencia ainda seja mais alta que max, se ela for menor que a latencia da rota antiga, substitui-la
+					if (newPath!=null){ //only to tests 
+					///TODO: Ou mesmo que a nova latencia ainda seja mais alta que max, se ela for menor que a latencia da rota antiga, substitui-la
 					//if(newPath.getLatency().getValue()<originalLatency.getValue())
 
 						boolean toReturn = pushRoute(newPath, appReq);
@@ -1382,8 +1382,8 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 
 					Path newPath = getLowerPathLatency(appReq);
 
-					if(newPath.getLatency().getValue() < appReq.getMax()){ //TODO: Verificar a eficiencia
-						//if (newPath!=null){ //only to tests 
+					//if(newPath.getLatency().getValue() < appReq.getMax()){ //TODO: Verificar a eficiencia
+						if (newPath!=null){ //only to tests 
 						return pushRoute(newPath, appReq);
 					} else {
 						log.info("There are no lower delay path/route.");
@@ -1412,7 +1412,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 				List<Object> m_results;
 				m_results = new ArrayList<Object >();
 				
-				log.info("IP src ip {}, dst ip {}", ipv4.getSourceAddress(), ipv4.getDestinationAddress()+ " "+mdecoder.getMessageTypeName());
+				//log.info("IP src ip {}, dst ip {}", ipv4.getSourceAddress(), ipv4.getDestinationAddress());
 				//log.info("Mensagem do tipo {}", mdecoder.getMessageTypeName());
 
 
@@ -1427,6 +1427,8 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 						case AbstractMessage.PUBLISH : 
 							PublishMessage mPublish = (PublishMessage) m_results.get(0);
 							mqttMessageType = mPublish;
+							//log.info("Mqtt Topic Publish {}", mPublish.toString());
+
 
 							String topic = mPublish.getTopicName();
 							Set<String> topics = topicReqService.getAllTopics();
@@ -1505,7 +1507,16 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 							UnsubAckMessage mUnsuback = (UnsubAckMessage) m_results.get(0);
 							log.info("Mqtt Topic UnsubAck {}", mUnsuback.toString());
 							break;
+						case AbstractMessage.PINGREQ: 
+							PingReqMessage mPingReq = (PingReqMessage) m_results.get(0);
+							log.info("Mqtt Topic PingRequest {}", mPingReq.toString());
+							break;
+						case AbstractMessage.PINGRESP: 
+							PingRespMessage mPingResp = (PingRespMessage) m_results.get(0);
+							log.info("Mqtt Topic PingResponse {}", mPingResp.toString());
+							break;
 						}
+						
 						
 					}
 				} catch (Exception e) {

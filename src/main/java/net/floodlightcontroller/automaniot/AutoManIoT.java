@@ -70,7 +70,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	protected Map<String, ScheduledFuture<?>> scheduledFutureMap;
 	protected ScheduledThreadPoolExecutor threadPool;
 	
-	
+		
 	
 	class ContinuousDelayMonitor implements Runnable {
 		private AppReq appReq;
@@ -260,9 +260,9 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	    //appReqMap.put(ar.getName(), ar);
 		//appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
 		
-		TopicReq tr = new TopicReq("aloha", 10, 100, 10);
+		TopicReq tr = new TopicReq("traffic", 1, 10, 100, 10);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("healthcare", 10, 100, 10);
+		tr = new TopicReq("healthcare", 1, 10, 100, 10);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 	    
 	}
