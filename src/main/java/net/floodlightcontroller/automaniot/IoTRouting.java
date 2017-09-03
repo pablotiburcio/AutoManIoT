@@ -1246,7 +1246,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			toReturn = toReturn && pushRoute(reversePath, reverseMatchIP ,appReq.getDstId(), U64.of(0L), false, flowModCommand, appReq.getTimeout());
 			toReturn = toReturn && pushRoute(path, matchARP, appReq.getSrcId(), U64.of(0L), false, flowModCommand, appReq.getTimeout());
 			toReturn = toReturn && pushRoute(reversePath, reverseMatchArp, appReq.getDstId(), U64.of(0L), false, flowModCommand, appReq.getTimeout());
-
+			
 			return toReturn;
 		}
 		
@@ -1321,10 +1321,11 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			//TODO: Latencia retorna null quando o getPath e calculado com 4 parametros (se corrigir em topology o ping nao funciona mais)
 			//Path originalPath = routingService.getPath(appReq.getSrcId(), appReq.getSrcPort(), appReq.getDstId(), appReq.getDstPort());
 			Path originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getDstId());
-
+			//log.info("Path Atual {}", originalPath);
 			U64 originalLatency = originalPath.getLatency();
 
 			if (originalLatency != null){
+				//log.info("Latencia da Rota Original {}", originalLatency.getValue());
 				if (originalLatency.getValue() > appReq.getMax()){
 					//log.info("Path Atual {}", originalPath);
 					//log.info("Latencia da Rota Original {}", originalLatency.getValue());
@@ -1339,14 +1340,17 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 					///TODO: Ou mesmo que a nova latencia ainda seja mais alta que max, se ela for menor que a latencia da rota antiga, substitui-la
 					//if(newPath.getLatency().getValue()<originalLatency.getValue())
 
+						log.info("Rota Nova {}", newPath.toString());
 						boolean toReturn = pushRoute(newPath, appReq);
-						log.info("A nova rota foi escrita {} com latencia {}", toReturn, newPath.getLatency());
+						//log.info("A nova rota foi escrita {} com latencia {}", toReturn, newPath.getLatency());
 						IOFSwitch sw = switchService.getSwitch(appReq.getSrcId());
 						pushPacket(sw, pi, newPath.getPath().get(0).getPortId(), false, cntx);
 						return toReturn;
 					} else {
 						log.info("There are no lower delay path/route.");
 					}
+				} else {
+					log.info("Latencia atual ja eh suficiente");
 				} 
 
 				//topologyService.getAllLinks();
@@ -1388,6 +1392,8 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 					} else {
 						log.info("There are no lower delay path/route.");
 					}
+				} else {
+					log.info("Latencia atual ja e suficiente");
 				}
 			} 
 
@@ -1433,7 +1439,6 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 							String topic = mPublish.getTopicName();
 							Set<String> topics = topicReqService.getAllTopics();
 							//log.info("All Topics  {}", topics);
-							
 							if (topics.contains(topic)){
 								//log.info("Mqtt Topic Publish {}", mPublish.getTopicName());
 								//log.info("Mqtt All Topics {}",topicReqService.getAllTopics());
@@ -1463,7 +1468,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 											tcp.getSourcePort(), tcp.getDestinationPort(), 
 											topicReq.getMin(), topicReq.getMax(), adaptationRateType, topicReq.getTimeout());
 
-									//log.info("AppReq criada {}", appReq.toString());
+									log.info("AppReq criada {}", appReq.toString());
 									//log.info("appReqService.contains(appReq) = {}", appReqService.containsValue(appReq));
 									//TODO: Verify the eficiency
 									if (appReqService.containsValue(appReq)){ //if appReq is already in list (compared with specific hashcode in AppReq)
@@ -1478,7 +1483,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 												log.info("-------------------COMMAND STOP ---- msg foi reenviada pelo IoTRouting, havia nova rota");
 												return Command.STOP;
 											} else {
-												log.info("-------------------COMMAND CONTINUE ---- msg nao foi reenviada pelo IoTRouting e sim por Forwarding, nao havia nova rotas");
+												log.info("-------------------COMMAND CONTINUE ---- msg nao foi reenviada pelo IoTRouting e sim por Forwarding, nao havia nova rotas ou rota atual ja suficiente");
 												return Command.CONTINUE;
 											}
 										}
