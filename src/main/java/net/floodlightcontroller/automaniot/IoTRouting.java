@@ -39,12 +39,9 @@ import org.projectfloodlight.openflow.types.TransportPort;
 import org.projectfloodlight.openflow.types.U16;
 import org.projectfloodlight.openflow.types.U64;
 import org.projectfloodlight.openflow.types.VlanVid;
-import org.simpleframework.transport.Transport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.hash.HashCode;
-import com.sun.org.apache.bcel.internal.generic.I2F;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;

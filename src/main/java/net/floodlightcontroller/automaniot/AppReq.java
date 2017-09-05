@@ -5,8 +5,6 @@ import org.projectfloodlight.openflow.types.IPv4Address;
 import org.projectfloodlight.openflow.types.OFPort;
 import org.projectfloodlight.openflow.types.TransportPort;
 
-import sun.java2d.x11.X11SurfaceDataProxy.Opaque;
-
 public class AppReq {
 
 	private String name;
