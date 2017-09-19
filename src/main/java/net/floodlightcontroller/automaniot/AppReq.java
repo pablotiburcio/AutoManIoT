@@ -59,6 +59,17 @@ public class AppReq {
 	
 
 	@Override
+	/*hash with the attributes:
+	 * adaptionRateType
+	 * srcIP, dstIP
+	 * srcId, dstId
+	 * dstTransPort
+	 * max, min
+	 * ofDstPort, ofSrcPort
+	 * srcTransPort, dstTransPort
+	 * timeout
+	 * topic 
+	*/
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;

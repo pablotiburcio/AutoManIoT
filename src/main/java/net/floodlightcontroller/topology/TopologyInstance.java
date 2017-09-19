@@ -168,8 +168,11 @@ public class TopologyInstance {
          * path located (i.e. first run of dijkstra's algorithm) will be used 
          * as the broadcast tree for the archipelago.
          */
+        
+        long startTime = System.nanoTime();
         computeOrderedPaths();
-
+        long endTime = System.nanoTime();
+        log.info("-----------Tempo de calculo yens= {}ms", (endTime-startTime)/1000000);
         /*
          * Step 5: Determine the broadcast ports for each archipelago. These are
          * the ports that reside on the broadcast tree computed and saved when
