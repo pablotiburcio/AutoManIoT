@@ -168,9 +168,9 @@ public class MqttUtils {
 	//Identified by TCP/IP protocol and 1883 port 
 	public static boolean isMqttMessage(Ethernet eth){
 		if(eth.getEtherType() == EthType.IPv4){ //Do it for IPv6 mqttMessages
-			log.info("eth.getEtherType()= {}", eth.getEtherType());
-			log.info("EthType.IPv4= {}", EthType.IPv4);
-			log.info("eth.getPayload()={}",eth.getPayload().toString());
+			//log.info("eth.getEtherType()= {}", eth.getEtherType());
+			//log.info("EthType.IPv4= {}", EthType.IPv4);
+			//log.info("eth.getPayload()={}",eth.getPayload().toString());
 			IPv4 ipv4 = (IPv4) eth.getPayload();
 			if (ipv4.getProtocol() == IpProtocol.TCP){
 				TCP tcp = (TCP) ipv4.getPayload();

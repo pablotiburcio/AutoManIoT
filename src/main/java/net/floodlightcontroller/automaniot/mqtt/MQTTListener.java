@@ -1,8 +1,7 @@
 package net.floodlightcontroller.automaniot.mqtt;
 
 
-//import org.eclipse.paho.client.mqttv3.*;
-//import org.eclipse.paho.client.mqttv3.internal.wire.MqttWireMessage;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
