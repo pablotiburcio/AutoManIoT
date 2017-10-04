@@ -20,6 +20,11 @@ public interface IAppReqPusherService extends IFloodlightService {
     public void deleteAllAppReq();
     
     /**
+     * Updates all flows and groups.
+     */
+    public void updateAppReq(String name, AppReq appreq);
+    
+    /**
      * Gets all list of all flows and groups
      */
     public Map<String, AppReq> getAllAppReq();

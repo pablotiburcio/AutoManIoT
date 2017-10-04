@@ -66,6 +66,7 @@ implements IFloodlightModule, IStorageSourceListener, IAppReqPusherService {
 		public static final String COLUMN_MAX = "max";
 		public static final String COLUMN_ADAPTATION_RATE_TYPE = "adap_rate_type";
 		public static final String COLUMN_TIME_OUT = "time_out";
+		public static final String COLUMN_TIME = "time";
 		
 		private static Set<String> ALL_COLUMNS;	/* Use internally to query only */
 	}
@@ -81,6 +82,20 @@ implements IFloodlightModule, IStorageSourceListener, IAppReqPusherService {
 
 		} catch (Exception e) {
 			log.error("Did not add AppReq with bad match/action combination. {}", appReq.toString());
+		}
+
+	}
+	
+	@Override
+	public void updateAppReq(String name, AppReq appReq) {
+		try {
+
+			Map<String, Object> map = AppReqEntries.appReqToStorageEntry(appReq);
+			storageSourceService.updateRowAsync(TABLE_NAME, name, map);
+			appReqFromStorage = readAppReqFromStorage();
+
+		} catch (Exception e) {
+			log.error("Did not update AppReq with bad match/action combination. {}", appReq.toString());
 		}
 
 	}
@@ -205,12 +220,14 @@ implements IFloodlightModule, IStorageSourceListener, IAppReqPusherService {
 		int max = Integer.valueOf((String)row.get(Columns.COLUMN_MAX));
 		int adap_rate_type = Integer.valueOf((String)row.get(Columns.COLUMN_ADAPTATION_RATE_TYPE));
 		int timeout = Integer.valueOf((String)row.get(Columns.COLUMN_TIME_OUT));
-		String name = (String)row.get(Columns.COLUMN_NAME);
+		long time = Long.valueOf((String)row.get(Columns.COLUMN_TIME));
+		//String name = (String)row.get(Columns.COLUMN_NAME);
+		String name = (String)row.get(Columns.COLUMN_TOPIC);
 		String topic = (String)row.get(Columns.COLUMN_TOPIC);
 
 		AppReq reqTable = new AppReq(name, topic, ipv4.getSourceAddress(), ipv4.getDestinationAddress(), 
 				srcId, dstId, ofSrcPort, ofDstPort,
-				tcp.getSourcePort(), tcp.getDestinationPort(), min, max, adap_rate_type,timeout);
+				tcp.getSourcePort(), tcp.getDestinationPort(), min, max, adap_rate_type,timeout, time);
 		appReqs.put((String) row.get(Columns.COLUMN_NAME), reqTable);
 	}
 	

@@ -1356,6 +1356,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 				//topologyService.getAllLinks();
 				//linkDiscoveryService.getLinkInfo(l);			
 			}
+			log.info("Original Latency is null");
 			return false;
 		}
 		
@@ -1374,7 +1375,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			Path originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getDstId());
 
 			U64 originalLatency = originalPath.getLatency();
-			//log.info("Latencia da rota antiga {}", originalPath.getLatency());
+			//	log.info("Latencia da rota antiga {}", originalPath.getLatency());
 			
 			//TODO: verificar ao comparar rota original e nova, pois a nova eh calculada da porta
 			//de inicio a porta fim, jah a rota original, descartar a 1a e ultima porta (getPath(src, dst) retorna a latencia, mas getpath(src,dst,srcport, dstport) nao retorna latencia)
@@ -1428,7 +1429,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 				List<Object> m_results;
 				m_results = new ArrayList<Object >();
 				
-				log.info("is mqtt, IP src ip {}, dst ip {}", ipv4.getSourceAddress(), ipv4.getDestinationAddress());
+				//log.info("is mqtt, IP src ip {}, dst ip {}", ipv4.getSourceAddress(), ipv4.getDestinationAddress());
 				//log.info("Mensagem do tipo {}", mdecoder.getMessageTypeName());
 
 
@@ -1440,7 +1441,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 					mdecoder.decode(null, m_buffer, m_results);
 					
 					if (!m_results.isEmpty()){ 
-						log.info("IP src ip {}, dst ip {}", ipv4.getSourceAddress(), ipv4.getDestinationAddress()+ " "+mdecoder.getMessageTypeName());
+						//log.info("IP src ip {}, dst ip {}", ipv4.getSourceAddress(), ipv4.getDestinationAddress()+ " "+mdecoder.getMessageTypeName());
 						//log.info("Mensagem do tipo {}", mdecoder.getMessageTypeName());
 						switch (mdecoder.getMessageType()){
 						//TODO: tratar todos os tipos de mensagens MQTT	
@@ -1473,6 +1474,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 								
 								int adaptationRateType = 2;
 								
+								
 								//Calculates Path and put in appReq
 								//TODO: Verificar se nao encontrou valores/switches
 								if ((srcSwitch!=null) & (dstSwitch!=null)){
@@ -1484,11 +1486,17 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 											tcp.getSourcePort(), tcp.getDestinationPort(), 
 											topicReq.getMin(), topicReq.getMax(), adaptationRateType, topicReq.getTimeout());
 
-									log.info("AppReq criada {}", appReq.toString());
-									//log.info("appReqService.contains(appReq) = {}", appReqService.containsValue(appReq));
 									//TODO: Verify the eficiency
 									if (appReqService.containsValue(appReq)){ //if appReq is already in list (compared with specific hashcode in AppReq)
-
+										
+										AppReq databasedAppReq = appReqService.getAppReq(appReq.getName());
+										if (databasedAppReq.getTimeout()==0) {
+											//Calculate timeout between first two messages 
+											Long time = System.currentTimeMillis() - databasedAppReq.getTime();
+											time=time/1000;
+											appReq.setTimeout(time.intValue());
+											appReqService.updateAppReq(appReq.getName(), appReq);
+										}
 									} else {// TODO: verificar a eficiencia
 										
 										appReqService.addAppReq(AppReqPusher.TABLE_NAME, appReq); //insert to monitoring

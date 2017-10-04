@@ -114,6 +114,7 @@ public class AppReqEntries {
 		entry.put(AppReqPusher.Columns.COLUMN_MAX, Integer.toString(appReq.getMax()));
 		entry.put(AppReqPusher.Columns.COLUMN_ADAPTATION_RATE_TYPE, Integer.toString(appReq.getAdaptionRateType()));
 		entry.put(AppReqPusher.Columns.COLUMN_TIME_OUT, Integer.toString(appReq.getTimeout()));
+		entry.put(AppReqPusher.Columns.COLUMN_TIME, Long.toString(appReq.getTime()));
 
 		
 		return entry;

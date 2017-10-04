@@ -80,6 +80,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 		public void run(){
 
 			log.info("Monitoring app:{} in continuous mode, at each {}s", appReq.getName(), appReq.getTimeout());
+			log.info("Monitoring app:{}", appReq.toString());
 			//TODO: Corrigir: latencia mais alta do que a definida no mininet (alem de estar variando bastante). Sugestao pacote de sinalizacao.
 			//log.info("links: {}", linkDiscoveryService.getLinks());
 
@@ -100,6 +101,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 		public void run(){
 			
 			log.info("Monitoring app:{} at any delay or topology change", appReq.getName());
+			
 
 
 			Path p = routingService.getPath(appReq.getSrcId(), appReq.getDstId());
@@ -119,11 +121,15 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	}
 
 	
-	//Listener to add in reqTable
+	//Listener to add or update in reqTable
 	public void appReqAddListener(String name){
 		if (appReqService.getAppReq(name) != null) {
 			AppReq appReq = appReqService.getAppReq(name);
-
+			//If timeout = 0, do not monitor
+			if (appReq.getTimeout()==0) {
+					return ;
+			}
+				
 			if (appReq.getAdaptionRateType()==1){ //continuous
 				//Execute Delay Monitor at each X sec from timeout in ReqTable
 				scheduledFutureMap.put(name, threadPool.scheduleAtFixedRate(new ContinuousDelayMonitor(appReq), 0, appReq.getTimeout(), TimeUnit.SECONDS));
@@ -261,9 +267,9 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	    //appReqMap.put(ar.getName(), ar);
 		//appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
 		
-		TopicReq tr = new TopicReq("traffic", 1, 10, 100, 10);
+		TopicReq tr = new TopicReq("traffic", 1, 10, 100, 0);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("healthcare", 1, 10, 100, 10);
+		tr = new TopicReq("healthcare", 1, 10, 100, 0);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 	    
 	}
@@ -428,7 +434,6 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 
 	@Override
 	public void rowsDeleted(String tableName, Set<Object> rowKeys) {
-		//log.info("O listener escutou a remocao de um novo registro em AppReqTable {}, {}", tableName, rowKeys.toString());
 		for (Object key : rowKeys){
 			appReqDeleteListener(key.toString());
 	

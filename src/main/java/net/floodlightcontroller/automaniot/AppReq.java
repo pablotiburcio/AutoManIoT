@@ -8,13 +8,6 @@ import org.projectfloodlight.openflow.types.TransportPort;
 public class AppReq {
 
 	private String name;
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
 
 	//zero to bypass the values
 	//""- empty to bypass the values
@@ -26,6 +19,9 @@ public class AppReq {
 	//max: Maximum value of a specific requirement
 	//timeout: timeout to evaluate the requirement
 	private int min, max, timeout;
+	
+	//Used to calculate the time between two messages (if timeout=0 use this time to calculate timeout)
+	private long time;
 	
 	//Type of adaption rate of the requirements
 	//type 1: continuous - evaluates every timeout period
@@ -53,6 +49,29 @@ public class AppReq {
 		this.adaptionRateType = adaptationRateType;
 		this.timeout = timeout;
 		this.name = name+this.hashCode();
+		this.setTime(System.currentTimeMillis());
+
+	}
+	
+	public AppReq(String name, String topic, IPv4Address srcIP, IPv4Address dstIP, DatapathId srcId,  DatapathId dstId, OFPort ofSrcPort, OFPort ofDstPort, TransportPort srcTransPort, TransportPort dstTransPort, int min,
+			int max, int adaptationRateType, int timeout, long time) {
+		super();
+		
+		this.topic = topic;
+		this.srcIP = srcIP;
+		this.dstIP = dstIP;
+		this.srcId = srcId;
+		this.dstId = dstId;
+		this.ofSrcPort = ofSrcPort;
+		this.ofDstPort = ofDstPort;
+		this.srcTransPort = srcTransPort;
+		this.dstTransPort = dstTransPort;
+		this.min = min;
+		this.max = max;
+		this.adaptionRateType = adaptationRateType;
+		this.timeout = timeout;
+		this.name = name+this.hashCode();
+		this.time=time;
 
 	}
 	
@@ -84,7 +103,6 @@ public class AppReq {
 		result = prime * result + ((srcIP == null) ? 0 : srcIP.hashCode());
 		result = prime * result + ((srcId == null) ? 0 : srcId.hashCode());
 		result = prime * result + ((srcTransPort == null) ? 0 : srcTransPort.hashCode());
-		result = prime * result + timeout;
 		result = prime * result + ((topic == null) ? 0 : topic.hashCode());
 		return result;
 	}
@@ -144,14 +162,20 @@ public class AppReq {
 				return false;
 		} else if (!srcTransPort.equals(other.srcTransPort))
 			return false;
-		if (timeout != other.timeout)
-			return false;
 		if (topic == null) {
 			if (other.topic != null)
 				return false;
 		} else if (!topic.equals(other.topic))
 			return false;
 		return true;
+	}
+	
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	public DatapathId getSrcId() {
@@ -234,6 +258,7 @@ public class AppReq {
 	public String toString(){
 		String toReturn;
 		toReturn = this.name + " ";
+		toReturn = toReturn+= this.topic + " ";
 		toReturn = toReturn+= this.srcIP == null ? "" : this.srcIP.toString()+" "; 
 		toReturn = toReturn+= this.srcTransPort == null ? "" : this.srcTransPort.toString()+" ";
 		toReturn = toReturn+= this.dstIP == null ? "" : this.dstIP.toString()+" ";
@@ -245,7 +270,8 @@ public class AppReq {
 		toReturn = toReturn+= this.min+" ";
 		toReturn = toReturn+= this.max+" "; 
 		toReturn = toReturn+= this.adaptionRateType+" ";
-		toReturn = toReturn+= this.timeout+" "; 
+		toReturn = toReturn+= this.timeout+" ";
+		toReturn = toReturn+= this.time+" "; 
 		return toReturn;
 	}
 
@@ -277,6 +303,14 @@ public class AppReq {
 		
 		System.out.println("app1="+app1.toString()+ " hashCode="+ app1.hashCode());
 		System.out.println("app2="+app2.toString()+ " hashCode="+ app2.hashCode());
+	}
+
+	public long getTime() {
+		return time;
+	}
+
+	public void setTime(long time) {
+		this.time = time;
 	}
 	
 }
