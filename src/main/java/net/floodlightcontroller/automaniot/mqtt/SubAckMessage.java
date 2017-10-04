@@ -5,7 +5,6 @@ import java.util.List;
 
 /**
  *
- * @author andrea
  */
 public class SubAckMessage extends MessageIDMessage {
 

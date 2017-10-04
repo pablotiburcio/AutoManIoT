@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  *
- * @author andrea
  */
 public class MqttUtils {
 	protected static Logger log = LoggerFactory.getLogger(MqttUtils.class);

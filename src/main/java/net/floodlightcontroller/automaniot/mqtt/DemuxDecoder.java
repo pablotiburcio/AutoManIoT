@@ -2,14 +2,16 @@ package net.floodlightcontroller.automaniot.mqtt;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.AttributeMap;
+
 import java.util.List;
 
 /**
  *
- * @author andrea
  */
 abstract class DemuxDecoder {
     abstract void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception;
+    
     
     protected boolean decodeCommonHeader(AbstractMessage message, ByteBuf in) {
         //Common decoding part

@@ -6,7 +6,6 @@ import java.util.List;
 
 /**
  *
- * @author andrea
  */
 class PingRespDecoder extends DemuxDecoder {
 

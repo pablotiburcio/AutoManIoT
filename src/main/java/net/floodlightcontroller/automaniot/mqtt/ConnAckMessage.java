@@ -3,7 +3,6 @@ package net.floodlightcontroller.automaniot.mqtt;
 /**
 * The attributes Qos, Dup and Retain aren't used.
 * 
-* @author andrea
 */
 public class ConnAckMessage extends AbstractMessage {
    public static final byte CONNECTION_ACCEPTED = 0x00;

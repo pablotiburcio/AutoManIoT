@@ -3,7 +3,7 @@ package net.floodlightcontroller.automaniot.mqtt;
 /**
  * Basic abstract message for all MQTT protocol messages.
  * 
- * @author andrea
+ * 
  */
 public abstract class AbstractMessage {
 

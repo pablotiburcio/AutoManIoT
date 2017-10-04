@@ -3,7 +3,6 @@ package net.floodlightcontroller.automaniot.mqtt;
 
 /**
  *
- * @author andrea
  */
 class UnsubAckDecoder extends MessageIDDecoder {
 

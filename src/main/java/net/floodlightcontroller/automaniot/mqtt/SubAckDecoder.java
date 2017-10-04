@@ -7,7 +7,6 @@ import java.util.List;
 
 /**
  *
- * @author andrea
  */
 class SubAckDecoder extends DemuxDecoder {
 

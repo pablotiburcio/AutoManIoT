@@ -4,10 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import java.util.List;
 
-/**
- *
- * @author andrea
- */
+
 class ConnAckDecoder extends DemuxDecoder {
 
     @Override

@@ -8,7 +8,6 @@ import java.util.List;
 
 /**
  *
- * @author andrea
  */
 public class ConnectDecoder extends DemuxDecoder {
 

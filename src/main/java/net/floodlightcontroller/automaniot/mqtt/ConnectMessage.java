@@ -4,7 +4,6 @@ package net.floodlightcontroller.automaniot.mqtt;
 /**
  * The attributes Qos, Dup and Retain aren't used for Connect message
  * 
- * @author andrea
  */
 public class ConnectMessage extends AbstractMessage {
     String m_protocolName;

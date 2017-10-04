@@ -8,7 +8,6 @@ import java.util.List;
 
 /**
  *
- * @author andrea
  */
 class UnsubscribeDecoder extends DemuxDecoder {
 

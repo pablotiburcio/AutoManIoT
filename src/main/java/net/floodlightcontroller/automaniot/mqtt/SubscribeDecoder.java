@@ -9,7 +9,6 @@ import java.util.List;
 
 /**
  *
- * @author andrea
  */
 class SubscribeDecoder extends DemuxDecoder {
 

@@ -2,7 +2,6 @@ package net.floodlightcontroller.automaniot.mqtt;
 
 /**
  *
- * @author andrea
  */
 public class PublishMessage extends MessageIDMessage {
 
