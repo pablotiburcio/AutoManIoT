@@ -1536,23 +1536,23 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 							break;
 						case AbstractMessage.SUBSCRIBE : 
 							SubscribeMessage mSubscribe = (SubscribeMessage) m_results.get(0);
-							log.info("Mqtt Topic Subscribe {}", mSubscribe.toString());
+							//log.info("Mqtt Topic Subscribe {}", mSubscribe.toString());
 							break;
 						case AbstractMessage.UNSUBSCRIBE : 
 							UnsubscribeMessage mUnsubscribe = (UnsubscribeMessage) m_results.get(0);
-							log.info("Mqtt Topic Unsubscribe {}", mUnsubscribe.topics());
+							//log.info("Mqtt Topic Unsubscribe {}", mUnsubscribe.topics());
 							break;
 						case AbstractMessage.UNSUBACK: 
 							UnsubAckMessage mUnsuback = (UnsubAckMessage) m_results.get(0);
-							log.info("Mqtt Topic UnsubAck {}", mUnsuback.toString());
+							//log.info("Mqtt Topic UnsubAck {}", mUnsuback.toString());
 							break;
 						case AbstractMessage.PINGREQ: 
 							PingReqMessage mPingReq = (PingReqMessage) m_results.get(0);
-							log.info("Mqtt Topic PingRequest {}", mPingReq.toString());
+							//log.info("Mqtt Topic PingRequest {}", mPingReq.toString());
 							break;
 						case AbstractMessage.PINGRESP: 
 							PingRespMessage mPingResp = (PingRespMessage) m_results.get(0);
-							log.info("Mqtt Topic PingResponse {}", mPingResp.toString());
+							//log.info("Mqtt Topic PingResponse {}", mPingResp.toString());
 							break;
 						}
 						
