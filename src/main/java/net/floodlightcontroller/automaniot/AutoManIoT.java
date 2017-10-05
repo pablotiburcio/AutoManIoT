@@ -283,6 +283,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 
 	    
+		
 	}
 
 	@Override

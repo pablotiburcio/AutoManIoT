@@ -1515,8 +1515,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 //											} else {
 //												log.info("-------------------COMMAND CONTINUE ---- msg nao foi reenviada pelo IoTRouting e sim por Forwarding, nao havia nova rotas ou rota atual ja suficiente");
 //												endTime = System.nanoTime();
-//										        log.info("-----------Tempo pelo forwarding, conferindo por IoT = {}ms", (endTime-startTime)/1000000);
-//												
+//										        log.info("-----------Tempo pelo forwarding, conferindo por IoT = {}ms", (endTime-startTime)/1000000);	
 //												return Command.CONTINUE;
 //											}
 //										}
