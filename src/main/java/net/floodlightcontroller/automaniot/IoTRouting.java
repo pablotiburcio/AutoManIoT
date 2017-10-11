@@ -692,7 +692,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 
 			pushRoute(path, m, sw.getId(), cookie,
 					requestFlowRemovedNotifn,
-					OFFlowModCommand.ADD, FLOWMOD_DEFAULT_HARD_TIMEOUT);	
+					OFFlowModCommand.ADD, FLOWMOD_DEFAULT_HARD_TIMEOUT, FLOWMOD_DEFAULT_IDLE_TIMEOUT);	
 			/*pushRoute(path, m, pi, sw.getId(), cookie, 
 					cntx, requestFlowRemovedNotifn,
 					OFFlowModCommand.ADD);*/
@@ -724,7 +724,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 	@Override
         public boolean pushRoute(Path route, Match match,
                 DatapathId pinSwitch, U64 cookie,
-                boolean requestFlowRemovedNotification, OFFlowModCommand flowModCommand, int hardTimeOut) {
+                boolean requestFlowRemovedNotification, OFFlowModCommand flowModCommand, int hardTimeOut, int idleTimeOut) {
 
             boolean packetOutSent = false;
             
@@ -787,7 +787,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
                 }
 
                 fmb.setMatch(mb.build())
-                .setIdleTimeout(FLOWMOD_DEFAULT_IDLE_TIMEOUT)
+                .setIdleTimeout(idleTimeOut)
                 .setHardTimeout(hardTimeOut)
                 .setBufferId(OFBufferId.NO_BUFFER)
                 .setCookie(cookie)
@@ -1242,10 +1242,10 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			
 			//push route but don't send packet
 			boolean toReturn;
-			toReturn = pushRoute(path, matchIP, appReq.getSrcId(), U64.of(0L), false, flowModCommand, appReq.getTimeout()*timeOutFactor);
-			toReturn = toReturn && pushRoute(reversePath, reverseMatchIP ,appReq.getDstId(), U64.of(0L), false, flowModCommand, appReq.getTimeout()*timeOutFactor);
-			toReturn = toReturn && pushRoute(path, matchARP, appReq.getSrcId(), U64.of(0L), false, flowModCommand, appReq.getTimeout()*timeOutFactor);
-			toReturn = toReturn && pushRoute(reversePath, reverseMatchArp, appReq.getDstId(), U64.of(0L), false, flowModCommand, appReq.getTimeout()*timeOutFactor);
+			toReturn = pushRoute(path, matchIP, appReq.getSrcId(), U64.of(0L), false, flowModCommand, 0, appReq.getTimeout()*timeOutFactor);
+			toReturn = toReturn && pushRoute(reversePath, reverseMatchIP ,appReq.getDstId(), U64.of(0L), false, flowModCommand, 0, appReq.getTimeout()*timeOutFactor);
+			toReturn = toReturn && pushRoute(path, matchARP, appReq.getSrcId(), U64.of(0L), false, flowModCommand, 0, appReq.getTimeout()*timeOutFactor);
+			toReturn = toReturn && pushRoute(reversePath, reverseMatchArp, appReq.getDstId(), U64.of(0L), false, flowModCommand, 0, appReq.getTimeout()*timeOutFactor);
 			
 			return toReturn;
 		}
@@ -1396,9 +1396,9 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 				} else {
 					log.info("Latencia atual ja e suficiente");
 					//apenas getPath com 4 parametros retorna Path da fonte ao destino (incluindo as portas de entrada e saida)
-					originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getSrcPort(), appReq.getDstId(), appReq.getDstPort());
+					//originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getSrcPort(), appReq.getDstId(), appReq.getDstPort());
 					//Aplica rota antiga para manter modo proativo -> aplicar rota antes do seu timeout no switch
-					return pushRoute(originalPath, appReq);
+					//return pushRoute(originalPath, appReq);
 				}
 			} 
 
