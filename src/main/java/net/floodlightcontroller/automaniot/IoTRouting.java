@@ -1486,7 +1486,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 											tcp.getSourcePort(), tcp.getDestinationPort(), 
 											topicReq.getMin(), topicReq.getMax(), adaptationRateType, topicReq.getTimeout());
 
-									//TODO: Verify the eficiency
+									//TODO: Verify the efficiency
 									if (appReqService.containsValue(appReq)){ //if appReq is already in list (compared with specific hashcode in AppReq)
 										
 										AppReq databasedAppReq = appReqService.getAppReq(appReq.getName());
