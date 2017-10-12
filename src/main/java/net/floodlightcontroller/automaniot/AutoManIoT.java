@@ -271,19 +271,20 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 //	    TopicReq tr = new TopicReq("healthcare", 1, 10, 100, 0);
 //		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 	    
-		TopicReq tr = new TopicReq("structuralHealth", 1, 10, 100, 0);
+	    
+		TopicReq tr = new TopicReq("structuralHealth", 1, 10, 100, 10*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("wasteManagement", 1, 10, 100, 0);
+		tr = new TopicReq("wasteManagement", 1, 10, 100, 1*60*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("airMonitoring", 1, 10, 100, 0);
+		tr = new TopicReq("airMonitoring", 1, 10, 100, 30*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("noiseMonitoring", 1, 10, 100, 0);
+		tr = new TopicReq("noiseMonitoring", 1, 10, 100, 10*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("trafficCongestion", 1, 10, 100, 0);
+		tr = new TopicReq("trafficCongestion", 1, 10, 100, 10*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("energyConsumption", 1, 10, 100, 0);
+		tr = new TopicReq("energyConsumption", 1, 10, 100, 30*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("salubrityBuildings", 1, 10, 100, 0);
+		tr = new TopicReq("salubrityBuildings", 1, 10, 100, 10*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 
 	    
