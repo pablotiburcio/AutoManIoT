@@ -268,11 +268,11 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 		//appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
 		
 	    
-//	    TopicReq tr = new TopicReq("healthcare", 1, 10, 100, 0);
-//		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
+	    TopicReq tr = new TopicReq("healthcare", 1, 10, 100, 10);
+		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 	    
 	    
-		TopicReq tr = new TopicReq("structuralHealth", 1, 10, 100, 10*60/100);
+		tr = new TopicReq("structuralHealth", 1, 10, 100, 10*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 		tr = new TopicReq("wasteManagement", 1, 10, 100, 1*60*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);

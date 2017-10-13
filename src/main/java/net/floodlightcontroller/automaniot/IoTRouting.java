@@ -156,6 +156,9 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
     protected static FlowSetIdRegistry flowSetIdRegistry;
     
     private AbstractMessage mqttMessageType=null;
+    
+    //store the last calculated Path to app
+    private Map<String, Path> lastRoute;
 
     protected static class FlowSetIdRegistry {
         private volatile Map<NodePortTuple, Set<U64>> nptToFlowSetIds;
@@ -197,6 +200,8 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
         messageDamper = new OFMessageDamper(OFMESSAGE_DAMPER_CAPACITY,
                 EnumSet.of(OFType.FLOW_MOD),
                 OFMESSAGE_DAMPER_TIMEOUT);
+        
+        lastRoute = new HashMap<String, Path>();
     }
 	
 	//TODO: Definir uma % de variacao para nao mudar a rota a todo instante 
@@ -1372,7 +1377,12 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			//Path originalPath = routingService.getPath(srcSwitch.getNodeId(), srcSwitch.getPortId(), dstSwitch.getNodeId(), dstSwitch.getPortId());
 			//TODO: Latencia retorna null quando o getPath e calculado com 4 parametros (se corrigir em topology o ping nao funciona mais)
 			//Path originalPath = routingService.getPath(appReq.getSrcId(), appReq.getSrcPort(), appReq.getDstId(), appReq.getDstPort());
-			Path originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getDstId());
+			
+			Path originalPath = lastRoute.get(appReq.getName());
+			if (originalPath == null) {
+				log.info("sem rota de historico");
+				originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getDstId());
+			} 
 
 			U64 originalLatency = originalPath.getLatency();
 			//	log.info("Latencia da rota antiga {}", originalPath.getLatency());
@@ -1388,9 +1398,15 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 					Path newPath = getLowerPathLatency(appReq);
 
 					//if(newPath.getLatency().getValue() < appReq.getMax()){ //TODO: Verificar a eficiencia
-					if (newPath!=null){ //only to tests 
-						return pushRoute(newPath, appReq);
+					if (newPath!=null){ //only to tests
+						boolean result = pushRoute(newPath, appReq);
+						if (result) {
+							lastRoute.put(appReq.getName(), newPath);
+						}
+							
+						
 					} else {
+						//TODO: ALERTA
 						log.info("There are no lower delay path/route.");
 					}
 				} else {
@@ -1400,7 +1416,11 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 					//Aplica rota antiga para manter modo proativo -> aplicar rota antes do seu timeout no switch
 					//return pushRoute(originalPath, appReq);
 				}
+			} else {
+				 lastRoute.remove(appReq.getName());
 			} 
+			
+			
 
 				//topologyService.getAllLinks();
 				//linkDiscoveryService.getLinkInfo(l);			
@@ -1486,7 +1506,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 											tcp.getSourcePort(), tcp.getDestinationPort(), 
 											topicReq.getMin(), topicReq.getMax(), adaptationRateType, topicReq.getTimeout());
 
-									//TODO: Verify the efficiency
+									//TODO: Verify the ef,ficiency
 									if (appReqService.containsValue(appReq)){ //if appReq is already in list (compared with specific hashcode in AppReq)
 										
 										AppReq databasedAppReq = appReqService.getAppReq(appReq.getName());
@@ -1496,7 +1516,9 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 											time=time/1000;
 											appReq.setTimeout(time.intValue());
 											appReqService.updateAppReq(appReq.getName(), appReq);
-										}
+									  	} else { // 
+									  		lastRoute.remove(appReq.getName());
+									  	}
 									} else {// TODO: verificar a eficiencia
 										
 										appReqService.addAppReq(AppReqPusher.TABLE_NAME, appReq); //insert to monitoring
