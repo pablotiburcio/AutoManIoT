@@ -79,8 +79,8 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 		}
 		public void run(){
 
-			log.info("Monitoring app:{} in continuous mode, at each {}s", appReq.getName(), appReq.getTimeout());
-			log.info("Monitoring app:{}", appReq.toString());
+			//log.info("Monitoring app:{} in continuous mode, at each {}s", appReq.getName(), appReq.getTimeout());
+			//log.info("Monitoring app:{}", appReq.toString());
 			//TODO: Corrigir: latencia mais alta do que a definida no mininet (alem de estar variando bastante). Sugestao pacote de sinalizacao.
 			//log.info("links: {}", linkDiscoveryService.getLinks());
 

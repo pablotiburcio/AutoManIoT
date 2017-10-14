@@ -1380,7 +1380,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			
 			Path originalPath = lastRoute.get(appReq.getName());
 			if (originalPath == null) {
-				log.info("sem rota de historico");
+				log.info("sem rota no historico. Calculando nova rota para {}", appReq.getName());
 				originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getDstId());
 			} 
 
@@ -1393,7 +1393,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 				if (originalLatency.getValue() > appReq.getMax()){ 
 					//log.info("Path Atual {}", originalPath);
 					//log.info("Latencia Atual {}", originalLatency.getValue());
-					log.info("Trying to Set new latency.................");
+					log.info("Trying to Set new latency to {}", appReq.getName());
 
 					Path newPath = getLowerPathLatency(appReq);
 
@@ -1402,22 +1402,24 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 						boolean result = pushRoute(newPath, appReq);
 						if (result) {
 							lastRoute.put(appReq.getName(), newPath);
+							log.info("nova rota adicionada ao historico para {}", appReq.getName());
 						}
 							
 						
 					} else {
 						//TODO: ALERTA
-						log.info("There are no lower delay path/route.");
+						log.info("There are no lower delay path/route to {}", appReq.getName());
 					}
 				} else {
-					log.info("Latencia atual ja e suficiente");
+					log.info("Latencia atual ja e suficiente para {}", appReq.getName());
 					//apenas getPath com 4 parametros retorna Path da fonte ao destino (incluindo as portas de entrada e saida)
 					//originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getSrcPort(), appReq.getDstId(), appReq.getDstPort());
 					//Aplica rota antiga para manter modo proativo -> aplicar rota antes do seu timeout no switch
 					//return pushRoute(originalPath, appReq);
 				}
 			} else {
-				 lastRoute.remove(appReq.getName());
+				log.info("Apagando rota de {}. Rota com latencia nula", appReq.getName());
+				lastRoute.remove(appReq.getName());
 			} 
 			
 			
@@ -1517,6 +1519,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 											appReq.setTimeout(time.intValue());
 											appReqService.updateAppReq(appReq.getName(), appReq);
 									  	} else { // 
+									  		log.info("Apagando historico de rota de {}, pois a msg chegou no controlador mesmo com monitor", appReq.getName());
 									  		lastRoute.remove(appReq.getName());
 									  	}
 									} else {// TODO: verificar a eficiencia
