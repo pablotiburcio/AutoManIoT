@@ -1374,16 +1374,33 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
          */
 		@Override
 		public boolean applyLowerLatencyPath(AppReq appReq){
+			
+			Path originalPath = lastRoute.get(appReq.getName());
+			
+			//TODO: Solve it in Topology Instance - if routing in same PID
+			if (appReq.getSrcId().equals(appReq.getDstId())) {
+				log.info("origem e destino no mesmo switch");
+				originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getSrcPort(), appReq.getDstId(), appReq.getDstPort());
+				boolean result = pushRoute(originalPath, appReq);
+				if (result) {
+					lastRoute.put(appReq.getName(), originalPath);
+					log.info("nova rota adicionada MESMO SWITCH ao historico para {}", appReq.getName());
+				}
+				
+			}
+			
+			
 			//Path originalPath = routingService.getPath(srcSwitch.getNodeId(), srcSwitch.getPortId(), dstSwitch.getNodeId(), dstSwitch.getPortId());
 			//TODO: Latencia retorna null quando o getPath e calculado com 4 parametros (se corrigir em topology o ping nao funciona mais)
 			//Path originalPath = routingService.getPath(appReq.getSrcId(), appReq.getSrcPort(), appReq.getDstId(), appReq.getDstPort());
 			
-			Path originalPath = lastRoute.get(appReq.getName());
+			
 			if (originalPath == null) {
 				log.info("sem rota no historico. Calculando nova rota para {}", appReq.getName());
 				originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getDstId());
 			} 
 
+				
 			U64 originalLatency = originalPath.getLatency();
 			//	log.info("Latencia da rota antiga {}", originalPath.getLatency());
 			
