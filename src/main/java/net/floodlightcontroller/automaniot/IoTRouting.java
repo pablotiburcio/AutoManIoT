@@ -1378,7 +1378,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			Path originalPath = lastRoute.get(appReq.getName());
 			
 			//if routing in same PID. TODO: Solve it in Topology Instance - 
-			if (appReq.getSrcId().equals(appReq.getDstId()) & originalPath != null) {
+			if ((appReq.getSrcId().equals(appReq.getDstId())) & (originalPath == null)) {
 				log.info("origem e destino no mesmo switch");
 				originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getSrcPort(), appReq.getDstId(), appReq.getDstPort());
 				boolean result = pushRoute(originalPath, appReq);
