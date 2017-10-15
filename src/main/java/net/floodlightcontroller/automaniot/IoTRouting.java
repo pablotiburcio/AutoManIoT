@@ -1377,14 +1377,15 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			
 			Path originalPath = lastRoute.get(appReq.getName());
 			
-			//TODO: Solve it in Topology Instance - if routing in same PID
-			if (appReq.getSrcId().equals(appReq.getDstId())) {
+			//if routing in same PID. TODO: Solve it in Topology Instance - 
+			if (appReq.getSrcId().equals(appReq.getDstId()) & originalPath != null) {
 				log.info("origem e destino no mesmo switch");
 				originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getSrcPort(), appReq.getDstId(), appReq.getDstPort());
 				boolean result = pushRoute(originalPath, appReq);
 				if (result) {
 					lastRoute.put(appReq.getName(), originalPath);
 					log.info("nova rota adicionada MESMO SWITCH ao historico para {}", appReq.getName());
+					return true;
 				}
 				
 			}
