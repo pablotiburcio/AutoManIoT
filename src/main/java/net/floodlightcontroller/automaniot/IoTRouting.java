@@ -1372,41 +1372,42 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
          * @param  
          * @return true if new Path and Package was applied.
          */
+		//TODO: Latencia retorna null quando o getPath e calculado com 4 parametros (se corrigir em topology o ping nao funciona mais)
+		
 		@Override
 		public boolean applyLowerLatencyPath(AppReq appReq){
 			
 			Path originalPath = lastRoute.get(appReq.getName());
 			
-			//if routing in same PID. TODO: Solve it in Topology Instance - 
-			if ((appReq.getSrcId().equals(appReq.getDstId())) & (originalPath == null)) {
-				log.info("origem e destino no mesmo switch");
-				originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getSrcPort(), appReq.getDstId(), appReq.getDstPort());
-				boolean result = pushRoute(originalPath, appReq);
-				if (result) {
-					lastRoute.put(appReq.getName(), originalPath);
-					log.info("nova rota adicionada MESMO SWITCH ao historico para {}", appReq.getName());
-					return true;
-				}
-				
-			}
-			
-			
-			//Path originalPath = routingService.getPath(srcSwitch.getNodeId(), srcSwitch.getPortId(), dstSwitch.getNodeId(), dstSwitch.getPortId());
-			//TODO: Latencia retorna null quando o getPath e calculado com 4 parametros (se corrigir em topology o ping nao funciona mais)
-			//Path originalPath = routingService.getPath(appReq.getSrcId(), appReq.getSrcPort(), appReq.getDstId(), appReq.getDstPort());
-			
-			
+			//Se não tiver rota anterior
 			if (originalPath == null) {
-				log.info("sem rota no historico. Calculando nova rota para {}", appReq.getName());
-				originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getDstId());
-			} 
+				//if routing in same PID. TODO: Solve it in Topology Instance - 
+				if ((appReq.getSrcId().equals(appReq.getDstId()))) {
+					log.info("origem e destino no mesmo switch");
+					originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getSrcPort(), appReq.getDstId(), appReq.getDstPort());
+					boolean result = pushRoute(originalPath, appReq);
+					if (result) {
+						lastRoute.put(appReq.getName(), originalPath);
+						log.info("nova rota adicionada MESMO SWITCH ao historico para {}", appReq.getName());
+						return true;
+					}
 
-				
+				} else {
+					log.info("sem rota no historico. Calculando nova rota para {}", appReq.getName());
+					originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getDstId());
+				}
+			//Se tiver rota anterior
+			} else {
+				//if routing in same PID. TODO: Solve it in Topology Instance - 
+				if ((appReq.getSrcId().equals(appReq.getDstId()))) {
+					return false;
+				}
+			}
+	
 			U64 originalLatency = originalPath.getLatency();
 			//	log.info("Latencia da rota antiga {}", originalPath.getLatency());
 			
-			//TODO: verificar ao comparar rota original e nova, pois a nova eh calculada da porta
-			//de inicio a porta fim, jah a rota original, descartar a 1a e ultima porta (getPath(src, dst) retorna a latencia, mas getpath(src,dst,srcport, dstport) nao retorna latencia)
+			//cuidado com a diferença entre getPath com 2 e 4 parametros
 			if (originalLatency != null){
 				if (originalLatency.getValue() > appReq.getMax()){ 
 					//log.info("Path Atual {}", originalPath);
