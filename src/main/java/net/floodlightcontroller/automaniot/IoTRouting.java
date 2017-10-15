@@ -1419,6 +1419,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 				}
 			} else {
 				log.info("Apagando rota de {}. Rota com latencia nula", appReq.getName());
+				log.info("Rota com latencia nula {}", originalPath);
 				lastRoute.remove(appReq.getName());
 			} 
 			
