@@ -1383,17 +1383,17 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			if (originalPath == null) {
 				//if routing in same PID. TODO: Solve it in Topology Instance - 
 				if ((appReq.getSrcId().equals(appReq.getDstId()))) {
-					log.info("origem e destino no mesmo switch");
+					//log.info("origem e destino no mesmo switch");
 					originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getSrcPort(), appReq.getDstId(), appReq.getDstPort());
 					boolean result = pushRoute(originalPath, appReq);
 					if (result) {
 						lastRoute.put(appReq.getName(), originalPath);
-						log.info("nova rota adicionada MESMO SWITCH ao historico para {}", appReq.getName());
+						//log.info("nova rota adicionada MESMO SWITCH ao historico para {}", appReq.getName());
 						return true;
 					}
 
 				} else {
-					log.info("sem rota no historico. Calculando nova rota para {}", appReq.getName());
+					//log.info("sem rota no historico. Calculando nova rota para {}", appReq.getName());
 					originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getDstId());
 				}
 			//Se tiver rota anterior
@@ -1408,6 +1408,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			//	log.info("Latencia da rota antiga {}", originalPath.getLatency());
 			
 			//cuidado com a diferença entre getPath com 2 e 4 parametros
+			//Aplica rota com nova latencia
 			if (originalLatency != null){
 				if (originalLatency.getValue() > appReq.getMax()){ 
 					//log.info("Path Atual {}", originalPath);
@@ -1421,7 +1422,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 						boolean result = pushRoute(newPath, appReq);
 						if (result) {
 							lastRoute.put(appReq.getName(), newPath);
-							log.info("nova rota adicionada ao historico para {}", appReq.getName());
+							//log.info("nova rota adicionada ao historico para {}", appReq.getName());
 						}
 							
 						
@@ -1539,8 +1540,8 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 											appReq.setTimeout(time.intValue());
 											appReqService.updateAppReq(appReq.getName(), appReq);
 									  	} else { // 
-									  		log.info("Apagando historico de rota de {}, pois a msg chegou no controlador mesmo com monitor", appReq.getName());
-									  		lastRoute.remove(appReq.getName());
+									  		//log.info("Apagando historico de rota de {}, pois a msg chegou no controlador mesmo com monitor", appReq.getName());
+									  		//lastRoute.remove(appReq.getName());
 									  	}
 									} else {// TODO: verificar a eficiencia
 										
