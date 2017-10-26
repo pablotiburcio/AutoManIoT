@@ -83,6 +83,7 @@ public class TopologyInstance {
     private Map<Cluster, Archipelago>           archipelagoFromCluster;
     private Map<DatapathId, Set<NodePortTuple>> portsBroadcastPerArchipelago; /* broadcast ports in each archipelago ID */
     private Map<PathId, List<Path>>             pathcache; /* contains computed paths ordered best to worst */
+    private Map<PathId, List<Path>>             pathcacheLatency; /* contains computed paths ordered best to worst based on Latency */
 
     protected TopologyInstance(Map<DatapathId, Set<OFPort>> portsWithLinks,
             Set<NodePortTuple> portsBlocked,
@@ -134,6 +135,8 @@ public class TopologyInstance {
         this.portsBroadcastPerSwitch = new HashMap<DatapathId,Set<OFPort>>();
 
         this.pathcache = new HashMap<PathId, List<Path>>();
+        
+        this.pathcacheLatency = new HashMap<PathId, List<Path>>();
 
         this.portsBroadcastPerArchipelago = new HashMap<DatapathId, Set<NodePortTuple>>();
 

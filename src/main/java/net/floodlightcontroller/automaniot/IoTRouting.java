@@ -1413,7 +1413,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 				if (originalLatency.getValue() > appReq.getMax()){ 
 					//log.info("Path Atual {}", originalPath);
 					//log.info("Latencia Atual {}", originalLatency.getValue());
-					log.info("Trying to Set new latency to {}", appReq.getName());
+					//log.info("Trying to Set new latency to {}", appReq.getName());
 
 					Path newPath = getLowerPathLatency(appReq);
 
