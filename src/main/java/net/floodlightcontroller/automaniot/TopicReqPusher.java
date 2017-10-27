@@ -50,6 +50,7 @@ public class TopicReqPusher
 		public static class Columns {
 			public static final String COLUMN_TOPIC = "topic";
 			public static final String COLUMN_REQUISITE = "requisite";
+			public static final String COLUMN_ADAPTATION_RATE_TYPE = "adaptation_rate_type";
 			public static final String COLUMN_MIN = "min";
 			public static final String COLUMN_MAX = "max";
 			public static final String COLUMN_TIME_OUT = "time_out";
@@ -139,6 +140,7 @@ public class TopicReqPusher
 			Set<String> tmp = new HashSet<String>();
 			tmp.add(Columns.COLUMN_TOPIC);
 			tmp.add(Columns.COLUMN_REQUISITE);
+			tmp.add(Columns.COLUMN_ADAPTATION_RATE_TYPE);
 			tmp.add(Columns.COLUMN_MIN);
 			tmp.add(Columns.COLUMN_MAX);
 			tmp.add(Columns.COLUMN_TIME_OUT);
@@ -154,9 +156,10 @@ public class TopicReqPusher
 			int max = Integer.valueOf((String)row.get(Columns.COLUMN_MAX));
 			int timeout = Integer.valueOf((String)row.get(Columns.COLUMN_TIME_OUT));
 			int requisite = Integer.valueOf((String)row.get(Columns.COLUMN_REQUISITE));
+			int adaptationRateType = Integer.valueOf((String)row.get(Columns.COLUMN_ADAPTATION_RATE_TYPE));
 			String topic = (String)row.get(Columns.COLUMN_TOPIC);
 
-			TopicReq reqTable = new TopicReq(topic, requisite, min, max, timeout);
+			TopicReq reqTable = new TopicReq(topic, requisite, adaptationRateType, min, max, timeout);
 			topicReqs.put((String) row.get(Columns.COLUMN_TOPIC), reqTable);
 		}
 		

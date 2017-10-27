@@ -633,6 +633,9 @@ ITopologyManagerBackend, ILinkDiscoveryListener, IOFMessageListener {
                     case "link_speed":
                         pathMetric = PATH_METRIC.LINK_SPEED;
                         break;
+                    case "multiple":
+                        pathMetric = PATH_METRIC.MULTIPLE;
+                        break;
                     default:
                         log.error("Invalid routing metric {}. Using default {}", 
                                 metric, pathMetric.getMetricName());

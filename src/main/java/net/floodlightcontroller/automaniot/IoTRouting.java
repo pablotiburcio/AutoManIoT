@@ -1515,8 +1515,6 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 								srcSwitch = srcDstSwitches.get(0);
 								dstSwitch = srcDstSwitches.get(1);
 								
-								int adaptationRateType = 2;
-								
 								
 								//Calculates Path and put in appReq
 								//TODO: Verificar se nao encontrou valores/switches
@@ -1527,7 +1525,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 											srcSwitch.getNodeId(), dstSwitch.getNodeId(), 
 											srcSwitch.getPortId(), dstSwitch.getPortId(),
 											tcp.getSourcePort(), tcp.getDestinationPort(), 
-											topicReq.getMin(), topicReq.getMax(), adaptationRateType, topicReq.getTimeout());
+											topicReq.getMin(), topicReq.getMax(), topicReq.getAdaptationRateType(), topicReq.getTimeout());
 
 									//TODO: Verify the ef,ficiency
 									if (appReqService.containsValue(appReq)){ //if appReq is already in list (compared with specific hashcode in AppReq)

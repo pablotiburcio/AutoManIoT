@@ -2,6 +2,7 @@ package net.floodlightcontroller.automaniot;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.projectfloodlight.openflow.protocol.OFMessage;
@@ -24,7 +25,7 @@ import net.floodlightcontroller.core.module.FloodlightModuleException;
 import net.floodlightcontroller.core.module.IFloodlightModule;
 import net.floodlightcontroller.core.module.IFloodlightService;
 import net.floodlightcontroller.devicemanager.IDeviceService;
-
+import net.floodlightcontroller.linkdiscovery.ILinkDiscovery.LDUpdate;
 import net.floodlightcontroller.linkdiscovery.ILinkDiscoveryService;
 import net.floodlightcontroller.core.IFloodlightProviderService;
 
@@ -44,6 +45,7 @@ import net.floodlightcontroller.routing.IRoutingService;
 import net.floodlightcontroller.routing.Path;
 import net.floodlightcontroller.storage.IStorageSourceListener;
 import net.floodlightcontroller.storage.IStorageSourceService;
+import net.floodlightcontroller.topology.ITopologyListener;
 import net.floodlightcontroller.topology.ITopologyService;
 
 import org.slf4j.Logger;
@@ -51,7 +53,7 @@ import org.slf4j.LoggerFactory;
 
 
 
-public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStorageSourceListener, IOFSwitchListener {
+public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStorageSourceListener, IOFSwitchListener, ITopologyListener {
 	protected static Logger log = LoggerFactory.getLogger(AutoManIoT.class);
 
 	
@@ -93,30 +95,24 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 		}
 	}
 	
-	class LazyDelayMonitor implements Runnable {
+	class LazyDelayMonitor implements Runnable, ITopologyListener {
 		private AppReq appReq;
 		LazyDelayMonitor(AppReq ar){
 			appReq = ar;
 		}
 		public void run(){
 			
-			log.info("Monitoring app:{} at any delay or topology change", appReq.getName());
+			log.info("Monitoring app:{} at topology change", appReq.getName());
 			
-
-
-			Path p = routingService.getPath(appReq.getSrcId(), appReq.getDstId());
-			U64 lat = p.getLatency();
-			if (lat != null){
-				if (lat.getValue() > appReq.getMax()){
-					log.info("PAth Atual {}", p);
-					log.info("Latencia Atual {}", lat.getValue());
-					log.info("Trying to Set new latency...");
-					iotRouting.setLowerLatencyPath(p, switchService, appReq);
-				}
-			} 
 			
 			//topologyService.getAllLinks();
 			//linkDiscoveryService.getLinkInfo(l);			
+		}
+		
+		@Override
+		public void topologyChanged(List<LDUpdate> linkUpdates) {
+			log.info("Mudou topologia, listener do lazy ok!!!!!!");
+			
 		}
 	}
 
@@ -149,8 +145,9 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 				
 				//second: apply continuous monitoring after timeout
 				//scheduledFutureMap.put(name, threadPool.scheduleAtFixedRate(new ContinuousDelayMonitor(appReq), appReq.getTimeout(), appReq.getTimeout(), TimeUnit.SECONDS));
-				scheduledFutureMap.put(name, threadPool.scheduleAtFixedRate(new ContinuousDelayMonitor(appReq), 0, appReq.getTimeout(), TimeUnit.SECONDS));
-				
+				LazyDelayMonitor lazyDelayMonitor = new LazyDelayMonitor(appReq);
+				topologyService.addListener(lazyDelayMonitor);
+				scheduledFutureMap.put(name, threadPool.schedule(lazyDelayMonitor, 0, TimeUnit.SECONDS));
 				
 			}
 		}
@@ -239,6 +236,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	    floodlightProvider.addOFMessageListener(OFType.PACKET_IN, this);
 	    storageSourceService.addListener(AppReqPusher.TABLE_NAME, this);
 		switchService.addOFSwitchListener(this);
+		topologyService.addListener(this);
 
 	    //linkDiscoveryService.
 
@@ -268,23 +266,26 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 		//appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
 		
 	    
-	    TopicReq tr = new TopicReq("healthcare", 1, 10, 100, 10);
+	    TopicReq tr = new TopicReq("healthcare", 1, 1, 10, 100, 10);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 	    
 	    
-		tr = new TopicReq("structuralHealth", 1, 10, 100, 10*60/100);
+		tr = new TopicReq("structuralHealth", 1, 1, 10, 100, 10*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("wasteManagement", 1, 10, 100, 1*60*60/100);
+		tr = new TopicReq("wasteManagement", 1, 1, 10, 100, 1*60*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("airMonitoring", 1, 10, 100, 30*60/100);
+		tr = new TopicReq("airMonitoring", 1, 1, 10, 100, 30*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("noiseMonitoring", 1, 10, 100, 10*60/100);
+		tr = new TopicReq("noiseMonitoring", 1, 1, 10, 100, 10*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("trafficCongestion", 1, 10, 100, 10*60/100);
+		tr = new TopicReq("trafficCongestion", 1, 1, 10, 100, 10*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("energyConsumption", 1, 10, 100, 30*60/100);
+		tr = new TopicReq("energyConsumption", 1, 1, 10, 100, 30*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("salubrityBuildings", 1, 10, 100, 10*60/100);
+		tr = new TopicReq("salubrityBuildings", 1, 1, 10, 100, 10*60/100);
+		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
+		
+		tr = new TopicReq("test", 1, 2, 10, 100, 10*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 
 	    
@@ -490,6 +491,11 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	@Override
 	public void switchDeactivated(DatapathId switchId) {
 		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void topologyChanged(List<LDUpdate> linkUpdates) {
 		
 	}
 

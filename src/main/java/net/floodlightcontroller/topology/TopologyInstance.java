@@ -784,7 +784,7 @@ public class TopologyInstance {
     }
 
     /*
-     * Calculates and stores n possible paths  using Yen's algorithm,
+     * Calculates and stores n possible paths using Yen's algorithm,
      * looping through every switch. These lists of routes are stored 
      * in the pathcache.
      */
@@ -792,6 +792,8 @@ public class TopologyInstance {
         List<Path> paths;
         PathId pathId;
         pathcache.clear();
+        pathcacheLatency.clear();
+        Archipelago srcArch, dstArch;
 
         for (Archipelago a : archipelagos) { /* for each archipelago */
             Set<DatapathId> srcSws = a.getSwitches();
@@ -802,10 +804,32 @@ public class TopologyInstance {
             for (DatapathId src : srcSws) { /* permute all member switches */
                 for (DatapathId dst : dstSws) {
                     log.debug("Calling Yens {} {}", src, dst);
-                    paths = yens(src, dst, TopologyManager.getMaxPathsToComputeInternal(),
-                            getArchipelago(src), getArchipelago(dst), null);
-                    pathId = new PathId(src, dst);
-                    pathcache.put(pathId, paths);
+                    
+                    srcArch = getArchipelago(src);
+                    dstArch = getArchipelago(dst);
+                    
+                    //Used in AutoManIoT in Lazy Mode - calculates multiple metrics paths 
+                    if (TopologyManager.getPathMetricInternal()==PATH_METRIC.MULTIPLE) {
+                    	// define which metrics to calculate 
+                    	paths = yens(src, dst, TopologyManager.getMaxPathsToComputeInternal(),
+                                srcArch, dstArch, PATH_METRIC.HOPCOUNT);
+                    	pathId = new PathId(src, dst);
+                    	pathcache.put(pathId, paths);
+                    	
+                    	paths = yens(src, dst, TopologyManager.getMaxPathsToComputeInternal(),
+                                srcArch, dstArch, PATH_METRIC.LATENCY);
+                    	pathId = new PathId(src, dst);
+                    	pathcacheLatency.put(pathId, paths);
+                    	
+                    	
+                    } else {
+                    	paths = yens(src, dst, TopologyManager.getMaxPathsToComputeInternal(),
+                            srcArch, dstArch, TopologyManager.getPathMetricInternal());
+                    	pathId = new PathId(src, dst);
+                    	pathcache.put(pathId, paths);
+                    }
+                    
+                    
                     log.debug("Adding paths {}", paths);
                 }
             }
@@ -996,7 +1020,7 @@ public class TopologyInstance {
 
         // Find link costs
         Map<Link, Integer> linkCost = initLinkCostMap(pm);
-
+   
         Map<DatapathId, Set<Link>> linkDpidMap = buildLinkDpidMap(switches, portsWithLinks, links);
 
         Map<DatapathId, Set<Link>> copyOfLinkDpidMap = new HashMap<DatapathId, Set<Link>>(linkDpidMap);
@@ -1274,7 +1298,7 @@ public class TopologyInstance {
     }
     
     /**
-     * Get the fastest path from the pathcache by path metric.
+     * Get the fastest path calculated here
      * @param srcId
      * @param dstId
      * @param pm

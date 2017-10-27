@@ -95,6 +95,7 @@ public class TopicReqEntries {
 		Map<String, Object> entry = new HashMap<String, Object>();
 		entry.put(TopicReqPusher.Columns.COLUMN_TOPIC, topicReq.getTopic());
 		entry.put(TopicReqPusher.Columns.COLUMN_REQUISITE, Integer.toString(topicReq.getRequisite()));
+		entry.put(TopicReqPusher.Columns.COLUMN_ADAPTATION_RATE_TYPE, Integer.toString(topicReq.getAdaptationRateType()));
 		entry.put(TopicReqPusher.Columns.COLUMN_MIN, Integer.toString(topicReq.getMin()));
 		entry.put(TopicReqPusher.Columns.COLUMN_MAX, Integer.toString(topicReq.getMax()));
 		entry.put(TopicReqPusher.Columns.COLUMN_TIME_OUT, Integer.toString(topicReq.getTimeout()));

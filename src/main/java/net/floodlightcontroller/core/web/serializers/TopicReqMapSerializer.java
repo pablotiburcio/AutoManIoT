@@ -34,6 +34,8 @@ public class TopicReqMapSerializer extends JsonSerializer<TopicReqMap> {
 				jGen.writeString(theMap.get(id).getTopic());
 				jGen.writeFieldName("requisite");
 				jGen.writeString(Integer.toString(theMap.get(id).getRequisite()));
+				jGen.writeFieldName("adaptation_rate_type");
+				jGen.writeString(Integer.toString(theMap.get(id).getAdaptationRateType()));
 				jGen.writeFieldName("min");
 				jGen.writeString(Integer.toString(theMap.get(id).getMin()));
 				jGen.writeFieldName("max");
