@@ -1424,6 +1424,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 
 */
 			Path newPath = getLowerPathLatency(appReq);
+			log.info("newPath {}", newPath.toString());
 			if(newPath.getLatency().getValue() < appReq.getMax()){ //TODO: Verificar a eficiencia
 				boolean result = pushRoute(newPath, appReq);
 				if (result) {
