@@ -37,14 +37,14 @@ public class MQTTDecoder extends ByteToMessageDecoder {
        m_decoderMap.put(AbstractMessage.PUBCOMP, new PubCompDecoder());
        m_decoderMap.put(AbstractMessage.PUBREC, new PubRecDecoder());
        m_decoderMap.put(AbstractMessage.PUBREL, new PubRelDecoder());
-       messageType=0;
     }
 
     @Override
 	public void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+    	log.info("-----------------------------bytebuf = {}",in.toString());
         in.markReaderIndex();
         if (!MqttUtils.checkHeaderAvailability(in)) {
-        	//log.info("Byte menor que 1");
+        	log.info("Byte menor que 1");
             in.resetReaderIndex();
             return;
         }

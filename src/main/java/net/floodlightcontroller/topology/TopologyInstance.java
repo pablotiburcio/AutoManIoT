@@ -1353,6 +1353,69 @@ public class TopologyInstance {
         return toReturn;
 
     }
+    
+    
+    /**
+     * Get the fastest path from the pathcacheLatency.
+     * @param srcId
+     * @param dstId
+     * @return fastPath by latency
+     */
+    public Path getPathLazyLatency(DatapathId srcId, DatapathId dstId) {
+        PathId id = new PathId(srcId, dstId);
+
+        /* Return empty route if srcId equals dstId */
+        if (srcId.equals(dstId)) {
+            return new Path(id, ImmutableList.of());
+        }
+
+        Path result = null;
+
+        try {
+            if (!pathcacheLatency.get(id).isEmpty()) {
+                result = pathcacheLatency.get(id).get(0);
+            }
+        } catch (Exception e) {
+            log.warn("Could not find route from {} to {}. If the path exists, wait for the topology to settle, and it will be detected", srcId, dstId);
+        }
+
+        if (log.isTraceEnabled()) {
+            log.trace("getPath: {} -> {}", id, result);
+        }
+        return result == null ? new Path(id, ImmutableList.of()) : result;
+    }
+    
+    /**
+     * Computes end-to-end path including src/dst switch
+     * ports in addition to the switches. This chains into
+     * {@link #getPath(DatapathId, DatapathId)} below.
+     * @param srcId
+     * @param srcPort
+     * @param dstId
+     * @param dstPort
+     * @return fast path by latency
+     */
+    public Path getPathLazyLatency(DatapathId srcId, OFPort srcPort,
+            DatapathId dstId, OFPort dstPort) {
+        Path r = getPathLazyLatency(srcId, dstId);
+        
+        /* Path cannot be null, but empty b/t 2 diff DPIDs -> not found */
+        if (! srcId.equals(dstId) && r.getPath().isEmpty()) {
+        //if (! (srcId.equals(dstId) && r.getPath().isEmpty())) {
+        	return r;
+        }
+
+        /* Else, path is valid (len=0) on the same DPID or (len>0) diff DPIDs */
+        List<NodePortTuple> nptList = new ArrayList<NodePortTuple>(r.getPath());
+        NodePortTuple npt = new NodePortTuple(srcId, srcPort);
+        nptList.add(0, npt); // add src port to the front
+        npt = new NodePortTuple(dstId, dstPort);
+        nptList.add(npt); // add dst port to the end
+
+        PathId id = new PathId(srcId, dstId);
+        r = new Path(id, nptList);
+        return r;
+    }
 
     //
     //  ITopologyService interface method helpers.

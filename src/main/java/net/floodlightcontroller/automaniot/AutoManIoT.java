@@ -111,7 +111,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 		
 		@Override
 		public void topologyChanged(List<LDUpdate> linkUpdates) {
-			log.info("Mudou topologia, listener do lazy ok!!!!!!");
+			iotRouting.applyLowerLatencyPath(appReq);
 			
 		}
 	}
@@ -266,26 +266,30 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 		//appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
 		
 	    
-	    TopicReq tr = new TopicReq("healthcare", 1, 1, 10, 100, 10);
-		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
+	    //TopicReq tr = new TopicReq("healthcare", 1, 1, 10, 100, 10);
+		//topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 	    
+	    //tr = new TopicReq("traffic", 1, 1, 10, 100, 10);
+		//topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 	    
-		tr = new TopicReq("structuralHealth", 1, 1, 10, 100, 10*60/100);
+	    int adaptationRate = 2;
+	    
+	    TopicReq tr = new TopicReq("structuralHealth", 1, adaptationRate, 10, 100, 10*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("wasteManagement", 1, 1, 10, 100, 1*60*60/100);
+		tr = new TopicReq("wasteManagement", 1, adaptationRate, 10, 100, 1*60*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("airMonitoring", 1, 1, 10, 100, 30*60/100);
+		tr = new TopicReq("airMonitoring", 1, adaptationRate, 10, 100, 30*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("noiseMonitoring", 1, 1, 10, 100, 10*60/100);
+		tr = new TopicReq("noiseMonitoring", 1, adaptationRate, 10, 100, 10*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("trafficCongestion", 1, 1, 10, 100, 10*60/100);
+		tr = new TopicReq("trafficCongestion", 1, adaptationRate, 10, 100, 10*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("energyConsumption", 1, 1, 10, 100, 30*60/100);
+		tr = new TopicReq("energyConsumption", 1, adaptationRate, 10, 100, 30*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("salubrityBuildings", 1, 1, 10, 100, 10*60/100);
+		tr = new TopicReq("salubrityBuildings", 1, adaptationRate, 10, 100, 10*60/100);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 		
-		tr = new TopicReq("test", 1, 2, 10, 100, 10*60/100);
+		tr = new TopicReq("healthcare", 1, 1, 10, 100, 10);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 
 	    

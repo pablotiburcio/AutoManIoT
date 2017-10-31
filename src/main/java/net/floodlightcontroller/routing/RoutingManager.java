@@ -19,7 +19,6 @@ import net.floodlightcontroller.core.module.FloodlightModuleContext;
 import net.floodlightcontroller.core.module.FloodlightModuleException;
 import net.floodlightcontroller.core.module.IFloodlightModule;
 import net.floodlightcontroller.core.module.IFloodlightService;
-import net.floodlightcontroller.routing.IRoutingService.PATH_METRIC;
 import net.floodlightcontroller.topology.ITopologyManagerBackend;
 import net.floodlightcontroller.topology.ITopologyService;
 
@@ -109,6 +108,16 @@ public class RoutingManager implements IFloodlightModule, IRoutingService {
     	return tm.getCurrentTopologyInstance().getPath(src, srcPort, dst, dstPort, pm);
     }
 
+	@Override
+	public Path getPathLazyLatency(DatapathId src, DatapathId dst) {
+		return tm.getCurrentTopologyInstance().getPathLazyLatency(src, dst);
+	}
+
+	@Override
+	public Path getPathLazyLatency(DatapathId src, OFPort srcPort, DatapathId dst, OFPort dstPort) {
+		return tm.getCurrentTopologyInstance().getPathLazyLatency(src, srcPort, dst, dstPort);
+	}
+    
     @Override
     public Path getPath(DatapathId src, OFPort srcPort, DatapathId dst, OFPort dstPort) {
         return tm.getCurrentTopologyInstance().getPath(src, srcPort, dst, dstPort);

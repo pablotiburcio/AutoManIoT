@@ -76,6 +76,7 @@ import net.floodlightcontroller.devicemanager.SwitchPort;
 import net.floodlightcontroller.devicemanager.internal.Entity;
 import net.floodlightcontroller.linkdiscovery.ILinkDiscoveryListener;
 import net.floodlightcontroller.linkdiscovery.ILinkDiscoveryService;
+import net.floodlightcontroller.packet.Data;
 import net.floodlightcontroller.packet.Ethernet;
 import net.floodlightcontroller.packet.IPv4;
 import net.floodlightcontroller.packet.IPv6;
@@ -1304,7 +1305,15 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			
 			Path newPath = null;
 			if ((srcSwitch!=null) & (dstSwitch!=null)){
-				newPath = routingEngineService.getPath(srcSwitch.getNodeId(), srcSwitch.getPortId(), dstSwitch.getNodeId(), dstSwitch.getPortId(), PATH_METRIC.LATENCY);
+				
+				//Continuous or Lazy Monitoring
+				if (appReq.getAdaptionRateType()==1) {
+					newPath = routingEngineService.getPath(srcSwitch.getNodeId(), srcSwitch.getPortId(), dstSwitch.getNodeId(), dstSwitch.getPortId(), PATH_METRIC.LATENCY);
+					log.info("Path low latency calculated in continuous {}", newPath);
+				} else if (appReq.getAdaptionRateType()==2) {
+					newPath = routingEngineService.getPathLazyLatency(srcSwitch.getNodeId(), srcSwitch.getPortId(), dstSwitch.getNodeId(), dstSwitch.getPortId());
+					log.info("Path low latency calculated in lazy {}", newPath);
+				}
 				//newPath = routingEngineService.getPath(srcSwitch.getNodeId(), dstSwitch.getNodeId(), PATH_METRIC.LATENCY);
 				//log.info("path low latency inserted {}", newPath);
 				
@@ -1312,7 +1321,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			return newPath;
 		}
 		
-		
+
 		
 		/**
          * Applies a Path with lower latency than the original if its possible 
@@ -1383,17 +1392,17 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			if (originalPath == null) {
 				//if routing in same PID. TODO: Solve it in Topology Instance - 
 				if ((appReq.getSrcId().equals(appReq.getDstId()))) {
-					//log.info("origem e destino no mesmo switch");
+					log.info("origem e destino no mesmo switch");
 					originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getSrcPort(), appReq.getDstId(), appReq.getDstPort());
 					boolean result = pushRoute(originalPath, appReq);
 					if (result) {
 						lastRoute.put(appReq.getName(), originalPath);
-						//log.info("nova rota adicionada MESMO SWITCH ao historico para {}", appReq.getName());
+						log.info("nova rota adicionada MESMO SWITCH ao historico para {}", appReq.getName());
 						return true;
 					}
 
 				} else {
-					//log.info("sem rota no historico. Calculando nova rota para {}", appReq.getName());
+					log.info("sem rota no historico. Calculando nova rota para {}", appReq.getName());
 					originalPath = routingEngineService.getPath(appReq.getSrcId(), appReq.getDstId());
 				}
 			//Se tiver rota anterior
@@ -1415,8 +1424,10 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 					//log.info("Latencia Atual {}", originalLatency.getValue());
 					//log.info("Trying to Set new latency to {}", appReq.getName());
 
-					Path newPath = getLowerPathLatency(appReq);
 
+					Path newPath = getLowerPathLatency(appReq);
+				
+					
 					//if(newPath.getLatency().getValue() < appReq.getMax()){ //TODO: Verificar a eficiencia
 					if (newPath!=null){ //only to tests
 						boolean result = pushRoute(newPath, appReq);
@@ -1450,31 +1461,46 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			
 			return false;
 		}
+
+		
+		long startTime=System.nanoTime();
+		long endTime = System.nanoTime();
+        //log.info("-----------Tempo mdecode= {}ms", (endTime-startTime)/1000000);
+		
+		
 		
 		@Override
 		public net.floodlightcontroller.core.IListener.Command receive(IOFSwitch sw, OFMessage msg,
 				FloodlightContext cntx) {
 
-			long startTime=System.nanoTime();
-			long endTime = System.nanoTime();
-	        //log.info("-----------Tempo mdecode= {}ms", (endTime-startTime)/1000000);
-			
+
 			
 			Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
-			//log.info(eth.toString());
-
-
+			
+			
 			if (MqttUtils.isMqttMessage(eth)){
 				IPv4 ipv4 = (IPv4) eth.getPayload();
 				TCP tcp = (TCP) ipv4.getPayload();
+				Data data = (Data) tcp.getPayload();
 				
 				MQTTDecoder mdecoder = new MQTTDecoder();
 				List<Object> m_results;
 				m_results = new ArrayList<Object >();
 				
 				//log.info("is mqtt, IP src ip {}, dst ip {}", ipv4.getSourceAddress(), ipv4.getDestinationAddress());
-				//log.info("Mensagem do tipo {}", mdecoder.getMessageTypeName());
 
+				//log.info("Ethernet:{}", eth.toString());
+				//log.info("IP:{}", ipv4.toString());
+				log.info("TCP:{}", tcp.getDataOffset());
+				log.info("TCP:{}", tcp.getDestinationPort());
+				log.info("TCP:{}", tcp.getSourcePort());
+				log.info("TCP:{}", tcp.getSequence());
+				//log.info("MQTT:{}", tcp.serialize());
+				//log.info("MQTT Serializ:{}", data.getPayload()	);
+				
+				
+				
+				log.info("mensagem completa MQTT Serializ2:{}", eth.getPayload().getPayload().getPayload().serialize());
 
 				ByteBuf m_buffer = Unpooled.copiedBuffer(eth.getPayload().getPayload().getPayload().serialize());
 				
@@ -1482,6 +1508,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 				try {
 										
 					mdecoder.decode(null, m_buffer, m_results);
+					log.info("Mensagem do tipo {}", mdecoder.getMessageTypeName());
 					
 					if (!m_results.isEmpty()){ 
 						//log.info("IP src ip {}, dst ip {}", ipv4.getSourceAddress(), ipv4.getDestinationAddress()+ " "+mdecoder.getMessageTypeName());
@@ -1491,7 +1518,8 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 						case AbstractMessage.PUBLISH : 
 							PublishMessage mPublish = (PublishMessage) m_results.get(0);
 							mqttMessageType = mPublish;
-							//log.info("Mqtt Topic Publish {}", mPublish.toString());
+							log.info("Mqtt Topic Publish {}", mPublish.getTopicName());
+							log.info("Mqtt Topic Publish {}", mPublish.getPayload());
 
 
 							String topic = mPublish.getTopicName();
@@ -1527,7 +1555,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 											tcp.getSourcePort(), tcp.getDestinationPort(), 
 											topicReq.getMin(), topicReq.getMax(), topicReq.getAdaptationRateType(), topicReq.getTimeout());
 
-									//TODO: Verify the ef,ficiency
+									//TODO: Verify the efficiency
 									if (appReqService.containsValue(appReq)){ //if appReq is already in list (compared with specific hashcode in AppReq)
 										
 										AppReq databasedAppReq = appReqService.getAppReq(appReq.getName());
@@ -1546,35 +1574,37 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 										appReqService.addAppReq(AppReqPusher.TABLE_NAME, appReq); //insert to monitoring
 										//A aplicacao da rota de menor latencia eh feita no proximo pacote encaminhado no switch, aplicado pelo AutoManIoT
 										//Nao eh feito mais nesta etapa para nao atrasar o encaminhamento do pacote
-//										if (adaptationRateType==2){
-//											//If it applied the new path, don't forward packet
-//											if (applyLowerLatencyPath(appReq, (OFPacketIn) msg, cntx)){
-//												log.info("-------------------COMMAND STOP ---- msg foi reenviada pelo IoTRouting, havia nova rota");
-//												
-//												endTime = System.nanoTime();
+										if (appReq.getAdaptionRateType()==1){
+											//If it applied the new path, don't forward packet
+											if (applyLowerLatencyPath(appReq, (OFPacketIn) msg, cntx)){
+												log.info("-------------------COMMAND STOP ---- msg foi reenviada pelo IoTRouting, havia nova rota");
+												
+												endTime = System.nanoTime();
 //										        log.info("-----------Tempo aplicar nova rota IoTRouting = {}ms", (endTime-startTime)/1000000);
 //												
-//												return Command.STOP;
+												return Command.STOP;
 //												
 //											} else {
 //												log.info("-------------------COMMAND CONTINUE ---- msg nao foi reenviada pelo IoTRouting e sim por Forwarding, nao havia nova rotas ou rota atual ja suficiente");
 //												endTime = System.nanoTime();
 //										        log.info("-----------Tempo pelo forwarding, conferindo por IoT = {}ms", (endTime-startTime)/1000000);	
 //												return Command.CONTINUE;
-//											}
+											}
 //										}
 										return Command.CONTINUE;
 										
 									}
-									//TODO: verificar se o pacote nao foi reenviado para o roteador para encaminhamento antes da nova rota ser aplicada
-									/* Use the buffered packet at the switch, if there's one stored */
-
 									
-
+									return Command.CONTINUE;
+									//TODO: verificar se o pacote nao foi reenviado para o roteador para encaminhamento antes da nova rota ser aplicada
+	
+									
+									}
 								}
 
-							} //Se nao ha o topico na lista, prosseguir encaminhamento convencional
-
+							}
+													
+							//Se nao ha o topico na lista, prosseguir encaminhamento convencional
 							
 							break;
 						case AbstractMessage.SUBSCRIBE : 
@@ -1669,6 +1699,8 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			// TODO Auto-generated method stub
 			
 		}
+
+
 }
 	
 	

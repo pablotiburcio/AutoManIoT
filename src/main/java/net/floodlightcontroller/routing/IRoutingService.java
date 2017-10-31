@@ -40,7 +40,7 @@ public interface IRoutingService extends IFloodlightService {
         HOPCOUNT_AVOID_TUNNELS("hopcount_avoid_tunnels"), 
         UTILIZATION("utilization"), 
         LINK_SPEED("link_speed"),
-    	MULTIPLE("MULTIPLE");
+    	MULTIPLE("multiple");
         
         String name;
 
@@ -128,6 +128,15 @@ public interface IRoutingService extends IFloodlightService {
     public Path getPath(DatapathId src, DatapathId dst, PATH_METRIC pm);
 
     /** @author PabloTiburcio
+     * Provides a path between srcPort on src and dstPort on dst with latency metric (from lazy method).
+     * @param src source switch
+     * @param dst destination switch
+     * @param pm Path Metric
+     * @return the lowest cost path determined by latency
+     */
+    public Path getPathLazyLatency(DatapathId src, DatapathId dst);
+    
+    /** @author PabloTiburcio
      * Provides a path between srcPort on src and dstPort on dst with the pm metric.
      * @param src source switch
      * @param srcPort source port on source switch
@@ -136,7 +145,20 @@ public interface IRoutingService extends IFloodlightService {
      * @param pm Path Metric
      * @return the lowest cost path determined by pm
      */
+    
     public Path getPath(DatapathId src, OFPort srcPort, DatapathId dst, OFPort dstPort, PATH_METRIC pm);
+    
+    /** @author PabloTiburcio
+     * Provides a path between srcPort on src and dstPort on dst with the latency metric (from lazy method).
+     * @param src source switch
+     * @param srcPort source port on source switch
+     * @param dst destination switch
+     * @param dstPort destination port on destination switch
+     * @param pm Path Metric
+     * @return the lowest cost path determined by latency
+     */
+    
+    public Path getPathLazyLatency(DatapathId src, OFPort srcPort, DatapathId dst, OFPort dstPort);
     
     /**
      * Provides a path between srcPort on src and dstPort on dst.
