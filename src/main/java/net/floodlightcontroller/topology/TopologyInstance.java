@@ -1245,7 +1245,9 @@ public class TopologyInstance {
         nptList.add(npt); // add dst port to the end
 
         PathId id = new PathId(srcId, dstId);
+        U64 latency = r.getLatency();
         r = new Path(id, nptList);
+        r.setLatency(latency);
         return r;
         
         //new code
@@ -1306,9 +1308,13 @@ public class TopologyInstance {
      */
     public Path getPath(DatapathId srcId, DatapathId dstId, PATH_METRIC pm) {
     	PathId pathId = new PathId(srcId, dstId);
-        List<Path> paths = pathcache.get(pathId);
 
-        if (paths == null) return new Path(pathId, ImmutableList.of());
+        if (srcId.equals(dstId)) {
+        	Path path = new Path(pathId, ImmutableList.of());
+        	path.setLatency(U64.of(0L));
+            return path;
+        }
+        
         
         //TODO: Calcular previamente, como no funcionamento padrao e armazenar em outro pathcache, 
         //Para nao calcular/recalcular a cada chegada de requisicao nova
@@ -1371,7 +1377,9 @@ public class TopologyInstance {
 
         /* Return empty route if srcId equals dstId */
         if (srcId.equals(dstId)) {
-            return new Path(id, ImmutableList.of());
+        	Path path = new Path(id, ImmutableList.of());
+        	path.setLatency(U64.of(0L));
+            return path;
         }
 
         Path result = null;
