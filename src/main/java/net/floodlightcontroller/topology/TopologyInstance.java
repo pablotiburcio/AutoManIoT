@@ -1312,7 +1312,12 @@ public class TopologyInstance {
         
         //TODO: Calcular previamente, como no funcionamento padrao e armazenar em outro pathcache, 
         //Para nao calcular/recalcular a cada chegada de requisicao nova
-        return yens(srcId, dstId, 1, getArchipelago(srcId), getArchipelago(dstId), pm).get(0); /* heavy computation */
+
+        
+        Path path =  yens(srcId, dstId, 1, getArchipelago(srcId), getArchipelago(dstId), pm).get(0); /* heavy computation */
+
+		return path;
+		
         //}
         //else {
         //    return new ArrayList<Path>(paths.subList(0, k));
@@ -1374,6 +1379,7 @@ public class TopologyInstance {
         try {
             if (!pathcacheLatency.get(id).isEmpty()) {
                 result = pathcacheLatency.get(id).get(0);
+
             }
         } catch (Exception e) {
             log.warn("Could not find route from {} to {}. If the path exists, wait for the topology to settle, and it will be detected", srcId, dstId);
@@ -1382,6 +1388,7 @@ public class TopologyInstance {
         if (log.isTraceEnabled()) {
             log.trace("getPath: {} -> {}", id, result);
         }
+        
         return result == null ? new Path(id, ImmutableList.of()) : result;
     }
     
@@ -1413,7 +1420,9 @@ public class TopologyInstance {
         nptList.add(npt); // add dst port to the end
 
         PathId id = new PathId(srcId, dstId);
+        U64 latency = r.getLatency();
         r = new Path(id, nptList);
+        r.setLatency(latency);
         return r;
     }
 

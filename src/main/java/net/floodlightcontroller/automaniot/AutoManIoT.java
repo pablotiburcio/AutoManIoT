@@ -89,6 +89,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 			//TODO: Corrigir: problema: todos hosts tem que dar um ping na rede para o floodlight cadastrar seu IP
 			//Isso altera as regras aplicadas aos roteadores (verificar)
 
+			log.info("Monitoring app:{} at continuous time", appReq.getName());
 
 			iotRouting.applyLowerLatencyPath(appReq);
 
@@ -104,7 +105,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 			
 			log.info("Monitoring app:{} at topology change", appReq.getName());
 			
-			
+			iotRouting.applyLowerLatencyPath(appReq);
 			//topologyService.getAllLinks();
 			//linkDiscoveryService.getLinkInfo(l);			
 		}
@@ -147,7 +148,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 				//scheduledFutureMap.put(name, threadPool.scheduleAtFixedRate(new ContinuousDelayMonitor(appReq), appReq.getTimeout(), appReq.getTimeout(), TimeUnit.SECONDS));
 				LazyDelayMonitor lazyDelayMonitor = new LazyDelayMonitor(appReq);
 				topologyService.addListener(lazyDelayMonitor);
-				scheduledFutureMap.put(name, threadPool.schedule(lazyDelayMonitor, 0, TimeUnit.SECONDS));
+				scheduledFutureMap.put(name, threadPool.scheduleAtFixedRate(lazyDelayMonitor, 0, appReq.getTimeout(), TimeUnit.SECONDS));
 				
 			}
 		}
