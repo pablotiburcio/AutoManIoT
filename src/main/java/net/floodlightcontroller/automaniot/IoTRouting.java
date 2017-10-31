@@ -1287,7 +1287,6 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			
 		}
 		
-		
 		@Override
 		public Path getLowerPathLatency(AppReq appReq){
 			//TODO: Corrigir: problema: todos hosts tem que dar um ping na rede para o floodlight cadastrar seu IP
