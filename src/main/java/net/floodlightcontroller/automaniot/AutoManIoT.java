@@ -89,7 +89,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 			//TODO: Corrigir: problema: todos hosts tem que dar um ping na rede para o floodlight cadastrar seu IP
 			//Isso altera as regras aplicadas aos roteadores (verificar)
 
-			//log.info("Monitoring app:{} at continuous time {}s", appReq.getName(), appReq.getTimeout());
+			log.info("Monitoring app:{} at continuous time {}s", appReq.getName(), appReq.getTimeout());
 
 			iotRouting.applyLowerLatencyPath(appReq);
 
@@ -103,7 +103,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 		}
 		public void run(){
 			
-			//log.info("Monitoring app:{} at topology change and {}s", appReq.getName(), appReq.getTimeout());
+			log.info("Monitoring app:{} at topology change ", appReq.getName());
 			
 			iotRouting.applyLowerLatencyPath(appReq);
 			//topologyService.getAllLinks();
@@ -276,23 +276,23 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	    
 	    int adaptationRate = 2;
 	    
-	    TopicReq tr = new TopicReq("structuralHealth", 1, adaptationRate, 10, 100, 10*60/100);
+	    TopicReq tr = new TopicReq("Temperature", 1, adaptationRate, 10, 100, 60);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("wasteManagement", 1, adaptationRate, 10, 100, 1*60*60/100);
+		tr = new TopicReq("Luximeter", 1, adaptationRate, 10, 100, 60);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("airMonitoring", 1, adaptationRate, 10, 100, 30*60/100);
+		tr = new TopicReq("AirMonitoring", 1, adaptationRate, 10, 100, 60);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("noiseMonitoring", 1, adaptationRate, 10, 100, 10*60/100);
+		tr = new TopicReq("NoiseMonitoring	", 1, adaptationRate, 10, 100, 60);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("trafficCongestion", 1, adaptationRate, 10, 100, 10*60/100);
+		tr = new TopicReq("TrafficCongestion", 1, adaptationRate, 10, 100, 60);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("energyConsumption", 1, adaptationRate, 10, 100, 30*60/100);
+		tr = new TopicReq("Humidity", 1, adaptationRate, 10, 100, 60);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		tr = new TopicReq("salubrityBuildings", 1, adaptationRate, 10, 100, 10*60/100);
+		tr = new TopicReq("CarPresence", 1, adaptationRate, 10, 100, 60);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 		
-		tr = new TopicReq("healthcare", 1, 1, 10, 100, 10);
-		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
+		//tr = new TopicReq("healthcare", 1, 1, 10, 100, 10);
+		//topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 
 	    
 		

@@ -1468,12 +1468,15 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 				log.info("TCP:{}", tcp.getDataOffset());
 				log.info("TCP:{}", tcp.getDestinationPort());
 				log.info("TCP:{}", tcp.getSourcePort());
-				log.info("TCP:{}", tcp.getSequence());
-				log.info("MQTT:{}", tcp.serialize());
-				log.info("MQTT Serializ:{}", data.getPayload()	);
-				log.info("mensagem completa MQTT Serializ2:{}", eth.getPayload().getPayload().getPayload().serialize());
-				 */
-
+				log.info("TCP:{}", tcp.getSequence());*/
+				//log.info("MQTT Serialized:{}", data.getData()	);
+				//log.info("mensagem completa MQTT Serializ2:{}", eth.getPayload().getPayload().getPayload().serialize());
+				
+			
+			
+			//return Command.CONTINUE;
+		
+				
 				ByteBuf m_buffer = Unpooled.copiedBuffer(eth.getPayload().getPayload().getPayload().serialize());
 				
 		        
@@ -1528,7 +1531,6 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 
 									//TODO: Verify the efficiency
 									if (appReqService.containsValue(appReq)){ //if appReq is already in list (compared with specific hashcode in AppReq)
-										log.info("Problem!!! app {} registered but message goes to Controller", appReq.getName());
 										
 										AppReq databasedAppReq = appReqService.getAppReq(appReq.getName());
 										if (databasedAppReq.getTimeout()==0) {
@@ -1540,31 +1542,36 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 									  	} else { // 
 									  		//log.info("Apagando historico de rota de {}, pois a msg chegou no controlador mesmo com monitor", appReq.getName());
 									  		//lastRoute.remove(appReq.getName());
+									  		
+											log.info("Problem!!! app {} registered but message goes to Controller", appReq.getName());
+											applyLowerLatencyPath(appReq);
+											
+											
 									  	}
 									} else {// TODO: verificar a eficiencia
 										
 										appReqService.addAppReq(AppReqPusher.TABLE_NAME, appReq); //insert to monitoring
 										//A aplicacao da rota de menor latencia eh feita no proximo pacote encaminhado no switch, aplicado pelo AutoManIoT
 										//Nao eh feito mais nesta etapa para nao atrasar o encaminhamento do pacote
-										/*
-										if (appReq.getAdaptionRateType()==1){
-											//If it applied the new path, don't forward packet
-											if (applyLowerLatencyPath(appReq, (OFPacketIn) msg, cntx)){
-												log.info("-------------------COMMAND STOP ---- msg foi reenviada pelo IoTRouting, havia nova rota");
-												
-												endTime = System.nanoTime();
-										        log.info("-----------Tempo aplicar nova rota IoTRouting = {}ms", (endTime-startTime)/1000000);
-												
-												return Command.STOP;
-												
-											} else {
-												log.info("-------------------COMMAND CONTINUE ---- msg nao foi reenviada pelo IoTRouting e sim por Forwarding, nao havia nova rotas ou rota atual ja suficiente");
-												endTime = System.nanoTime();
-										        log.info("-----------Tempo pelo forwarding, conferindo por IoT = {}ms", (endTime-startTime)/1000000);	
-												return Command.CONTINUE;
-											}
-										}
-										*/
+										
+//										if (appReq.getAdaptionRateType()==1){
+//											//If it applied the new path, don't forward packet
+//											if (applyLowerLatencyPath(appReq, (OFPacketIn) msg, cntx)){
+//												log.info("-------------------COMMAND STOP ---- msg foi reenviada pelo IoTRouting, havia nova rota");
+//												
+//												endTime = System.nanoTime();
+//										        log.info("-----------Tempo aplicar nova rota IoTRouting = {}ms", (endTime-startTime)/1000000);
+//												
+//												return Command.STOP;
+//												
+//											} else {
+//												log.info("-------------------COMMAND CONTINUE ---- msg nao foi reenviada pelo IoTRouting e sim por Forwarding, nao havia nova rotas ou rota atual ja suficiente");
+//												endTime = System.nanoTime();
+//										        log.info("-----------Tempo pelo forwarding, conferindo por IoT = {}ms", (endTime-startTime)/1000000);	
+//												return Command.CONTINUE;
+//											}
+//										}
+//										
 										
 									}
 									
@@ -1611,6 +1618,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			}
 			
 			return Command.CONTINUE;
+		
 		}
 
 		@Override
@@ -1627,7 +1635,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 
 		@Override
 		public boolean isCallbackOrderingPostreq(OFType type, String name) {
-			//If its a IoT MQTT packet, it will processed only by IoTRouting, with forwarding actions
+			//If its an IoT MQTT packet, it will processed only by IoTRouting, with forwarding actions
 			return (type.equals(OFType.PACKET_IN) && name.equals("forwarding"));
 		}
 
