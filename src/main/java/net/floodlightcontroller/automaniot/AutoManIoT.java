@@ -274,7 +274,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	    //tr = new TopicReq("traffic", 1, 1, 10, 100, 10);
 		//topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 	    
-	    int adaptationRate = 2;
+	    int adaptationRate = 1;
 	    
 	    TopicReq tr = new TopicReq("Temperature", 1, adaptationRate, 10, 100, 60);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
