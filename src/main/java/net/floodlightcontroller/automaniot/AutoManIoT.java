@@ -73,7 +73,47 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	protected Map<String, ScheduledFuture<?>> scheduledFutureMap;
 	protected ScheduledThreadPoolExecutor threadPool;
 	
+	class SimulateNodes implements Runnable {
 		
+		
+		public void run() {
+			//Registra AppReqs para simulacao maior que  >1000 nodos
+			//Simula os nodos a partir do registro de cada um deles (a partir de 1000 nodos), pois acima de 1000 nodos, mininet consome muita memoria >8Gb
+			IPv4 ipv4 = new IPv4();
+
+			//ip 10.0.0.0 = 167772160
+			int intIp = 167772160; //10.0.0.0
+			ipv4.setDestinationAddress(167772160);
+
+
+			//log.info("ip={}", ipv4.getSourceAddress());
+
+			String[] appType = {"Temperature", "Luximeter", "AirMonitoring", "NoiseMonitoring", "TrafficCongestion", "Humidity", "CarPresence"};
+
+
+			TCP tcp = new TCP();
+			tcp.setDestinationPort(1883);
+
+
+			for (int j=0; j<4; j++) {
+				intIp = 167772160;
+				tcp.setSourcePort(5050+j); 
+				for (int i=0; i<=1000; i++) {
+					int app = new Random().nextInt(7);
+					//log.info("i={}", i);
+
+					ipv4.setSourceAddress(intIp++);
+					AppReq ar = new AppReq(appType[app]
+							, appType[app], ipv4.getSourceAddress(), ipv4.getDestinationAddress(),
+							DatapathId.of(5L), DatapathId.of(6L),
+							OFPort.of(1), OFPort.of(1), tcp.getSourcePort(), tcp.getDestinationPort(), 1, 50, 1, 60);
+					appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
+					//log.info("srcIp={}, dstIp={}", ipv4.getSourceAddress(),  ipv4.getDestinationAddress());
+
+				}
+			}
+		}
+	}
 	
 	class ContinuousDelayMonitor implements Runnable {
 		private AppReq appReq;
@@ -245,58 +285,9 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 
 	    log.info("Starting AutoManIoT...");
 	    
-	    //Registering a AppReq test
-	    IPv4 ipv4 = new IPv4();
-	    //ipv4.setSourceAddress("10.0.0.1");
-	    //ipv4.setDestinationAddress("10.0.0.3");
+		scheduledFutureMap.put("simulationNodes", threadPool.schedule(new SimulateNodes(), 100, TimeUnit.SECONDS));
+
 	    
-	    //ip 10.0.0.0 = 167772160
-	    int intIp = 167772160; //10.0.0.0
-	    ipv4.setSourceAddress(167772161);
-	    log.info("ip={}", ipv4.getSourceAddress());
-	    ipv4.setDestinationAddress("10.0.0.0");
-	    TCP tcp = new TCP();
-	    tcp.setSourcePort(1883);
-	    tcp.setDestinationPort(0); 
-	    
-	    
-	    String[] appType = {"Temperature", "Luximeter", "AirMonitoring", "NoiseMonitoring", "TrafficCongestion", "Humidity", "CarPresence"};
-	    		
-	    for (int i=0; i<=4000; i++) {
-	    	int app = new Random().nextInt(7);
-	    	//log.info("i={}", i);
-	    	tcp.setDestinationPort(1883);
-		    tcp.setSourcePort(5050); 
-		    
-		    ipv4.setSourceAddress(intIp++);
-	    	AppReq ar = new AppReq(appType[app]
-	    			, appType[app], ipv4.getSourceAddress(), ipv4.getDestinationAddress(),
-				    DatapathId.of(5L), DatapathId.of(6L),
-	    			OFPort.of(1), OFPort.of(1), tcp.getSourcePort(), tcp.getDestinationPort(), 1, 50, 1, 60);
-			//appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
-		    log.info("srcIp={}, dstIp={}", ipv4.getSourceAddress(),  ipv4.getDestinationAddress());
-			
-	    }
-	    
-	    //Insert a AppReq with continuous adaptation rate - null to dispense
-//	    AppReq ar = new AppReq("aloha", "medical", ipv4.getSourceAddress(), ipv4.getDestinationAddress(),
-//				    DatapathId.of(5L), DatapathId.of(6L),
-//	    			OFPort.of(1), OFPort.of(1), tcp.getSourcePort(), tcp.getDestinationPort(), 1, 5, 1, 10);
-//	    log.info(ar.toString());
-//		appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
-		
-		//nao utilizar; problema ao procurar rota em continuous monitoring, com valores nulos.
-		//ar = new AppReq("testNull", "transport", IPv4Address.NONE, IPv4Address.NONE, DatapathId.NONE, DatapathId.NONE, OFPort.ZERO, OFPort.ZERO, TransportPort.NONE, TransportPort.NONE, 1, 5, 1, 20);
-	    //log.info(ar.toString());
-	    //appReqMap.put(ar.getName(), ar);
-		//appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
-		
-	    
-	    //TopicReq tr = new TopicReq("healthcare", 1, 1, 10, 100, 10);
-		//topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-	    
-	    //tr = new TopicReq("traffic", 1, 1, 10, 100, 10);
-		//topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 	    
 	    int adaptationRate = 1;
 	    
@@ -321,6 +312,11 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	    
 		
 	}
+	
+	
+	
+
+	
 
 	@Override
 	public net.floodlightcontroller.core.IListener.Command receive(IOFSwitch sw, OFMessage msg,
