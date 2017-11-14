@@ -250,8 +250,9 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	    //ipv4.setSourceAddress("10.0.0.1");
 	    //ipv4.setDestinationAddress("10.0.0.3");
 	    
-	    
-	    ipv4.setSourceAddress(167772160);
+	    //ip 10.0.0.0 = 167772160
+	    int intIp = 167772160; //10.0.0.0
+	    ipv4.setSourceAddress(167772161);
 	    log.info("ip={}", ipv4.getSourceAddress());
 	    ipv4.setDestinationAddress("10.0.0.0");
 	    TCP tcp = new TCP();
@@ -261,17 +262,21 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	    
 	    String[] appType = {"Temperature", "Luximeter", "AirMonitoring", "NoiseMonitoring", "TrafficCongestion", "Humidity", "CarPresence"};
 	    		
-/*	    for (int i=0; i<=4000; i++) {
+	    for (int i=0; i<=4000; i++) {
 	    	int app = new Random().nextInt(7);
-	    	log.info("i={}", i);
+	    	//log.info("i={}", i);
+	    	tcp.setDestinationPort(1883);
+		    tcp.setSourcePort(5050); 
+		    
+		    ipv4.setSourceAddress(intIp++);
 	    	AppReq ar = new AppReq(appType[app]
 	    			, appType[app], ipv4.getSourceAddress(), ipv4.getDestinationAddress(),
 				    DatapathId.of(5L), DatapathId.of(6L),
-	    			OFPort.of(1), OFPort.of(1), tcp.getSourcePort(), tcp.getDestinationPort(), 1, 5, 1, 10);
-			appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
-
+	    			OFPort.of(1), OFPort.of(1), tcp.getSourcePort(), tcp.getDestinationPort(), 1, 50, 1, 60);
+			//appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
+		    log.info("srcIp={}, dstIp={}", ipv4.getSourceAddress(),  ipv4.getDestinationAddress());
 			
-	    }*/
+	    }
 	    
 	    //Insert a AppReq with continuous adaptation rate - null to dispense
 //	    AppReq ar = new AppReq("aloha", "medical", ipv4.getSourceAddress(), ipv4.getDestinationAddress(),
