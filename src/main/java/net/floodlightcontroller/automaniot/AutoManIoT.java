@@ -108,7 +108,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 							DatapathId.of(5L), DatapathId.of(6L),
 							OFPort.of(1), OFPort.of(1), tcp.getSourcePort(), tcp.getDestinationPort(), 1, 50, 1, 60);
 					appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
-					//log.info("srcIp={}, dstIp={}", ipv4.getSourceAddress(),  ipv4.getDestinationAddress());
+					log.info("appReq {} adicionada em SimulateNodes {}", i+(1000*j), ar.toString());
 
 				}
 			}
