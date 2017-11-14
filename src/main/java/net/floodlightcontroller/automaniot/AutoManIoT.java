@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import org.projectfloodlight.openflow.protocol.OFMessage;
 import org.projectfloodlight.openflow.protocol.OFPacketIn;
@@ -249,11 +250,28 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	    //ipv4.setSourceAddress("10.0.0.1");
 	    //ipv4.setDestinationAddress("10.0.0.3");
 	    
-	    ipv4.setSourceAddress("10.0.0.5");
-	    ipv4.setDestinationAddress("10.0.0.6");
+	    ipv4.setSourceAddress(167772160);
+	    log.info("ip={}", ipv4.getSourceAddress());
+	    ipv4.setDestinationAddress("10.0.0.0");
 	    TCP tcp = new TCP();
 	    tcp.setSourcePort(1883);
-	    tcp.setDestinationPort(0);
+	    tcp.setDestinationPort(0); 
+	    
+	    
+	    String[] appType = {"Temperature", "Luximeter", "AirMonitoring", "NoiseMonitoring", "TrafficCongestion", "Humidity", "CarPresence"};
+	    		
+/*	    for (int i=0; i<=4000; i++) {
+	    	int app = new Random().nextInt(7);
+	    	log.info("i={}", i);
+	    	AppReq ar = new AppReq(appType[app]
+	    			, appType[app], ipv4.getSourceAddress(), ipv4.getDestinationAddress(),
+				    DatapathId.of(5L), DatapathId.of(6L),
+	    			OFPort.of(1), OFPort.of(1), tcp.getSourcePort(), tcp.getDestinationPort(), 1, 5, 1, 10);
+			appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
+
+			
+	    }*/
+	    
 	    //Insert a AppReq with continuous adaptation rate - null to dispense
 //	    AppReq ar = new AppReq("aloha", "medical", ipv4.getSourceAddress(), ipv4.getDestinationAddress(),
 //				    DatapathId.of(5L), DatapathId.of(6L),
