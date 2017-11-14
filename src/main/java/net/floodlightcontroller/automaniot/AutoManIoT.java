@@ -106,7 +106,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 					AppReq ar = new AppReq(appType[app]
 							, appType[app], ipv4.getSourceAddress(), ipv4.getDestinationAddress(),
 							DatapathId.of(5L), DatapathId.of(6L),
-							OFPort.of(1), OFPort.of(1), tcp.getSourcePort(), tcp.getDestinationPort(), 1, 50, 1, 60);
+							OFPort.of(1), OFPort.of(1), tcp.getSourcePort(), tcp.getDestinationPort(), 1, 50, 2, 60);
 					appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
 					log.info("appReq {} adicionada em SimulateNodes {}", i+(1000*j), ar.toString());
 
@@ -289,7 +289,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 
 	    
 	    
-	    int adaptationRate = 1;
+	    int adaptationRate = 2;
 	    
 	    TopicReq tr = new TopicReq("Temperature", 1, adaptationRate, 10, 100, 60);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
