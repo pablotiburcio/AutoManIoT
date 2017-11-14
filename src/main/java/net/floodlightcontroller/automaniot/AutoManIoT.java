@@ -259,6 +259,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	    tcp.setDestinationPort(0); 
 	    
 	    
+	    
 	    String[] appType = {"Temperature", "Luximeter", "AirMonitoring", "NoiseMonitoring", "TrafficCongestion", "Humidity", "CarPresence"};
 	    		
 /*	    for (int i=0; i<=4000; i++) {
