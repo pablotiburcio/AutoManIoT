@@ -74,7 +74,17 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	protected ScheduledThreadPoolExecutor threadPool;
 	
 	class SimulateNodes implements Runnable {
+		int nnodesToSimulate;
+		int nnodesSimulated;
+		int adaptationRate;
 		
+		///Nodos para simular e nodos ja simulados no mininet
+		//Multiplos de 1000
+		public SimulateNodes(int nnodesToSimulate, int nnodesSimulated, int adaptationRate) {
+			this.nnodesSimulated = nnodesSimulated;
+			this.nnodesToSimulate = nnodesToSimulate;
+			this.adaptationRate = adaptationRate;
+		}
 		
 		public void run() {
 			//Registra AppReqs para simulacao maior que  >1000 nodos
@@ -82,8 +92,8 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 			IPv4 ipv4 = new IPv4();
 
 			//ip 10.0.0.0 = 167772160
-			int intIp = 167772160; //10.0.0.0
-			ipv4.setDestinationAddress(167772160);
+			int intIp = 167772161; //10.0.0.1
+			ipv4.setDestinationAddress(167772161);
 
 
 			//log.info("ip={}", ipv4.getSourceAddress());
@@ -94,11 +104,12 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 			TCP tcp = new TCP();
 			tcp.setDestinationPort(1883);
 
-
-			for (int j=0; j<4; j++) {
-				intIp = 167772160;
+			int toSimulate = nnodesToSimulate - nnodesSimulated;
+			int eachThousand = toSimulate/1000;
+			for (int j=0; j<eachThousand; j++) {
+				intIp = 167772161;
 				tcp.setSourcePort(5050+j); 
-				for (int i=0; i<=1000; i++) {
+				for (int i=0; i<1000; i++) {
 					int app = new Random().nextInt(7);
 					//log.info("i={}", i);
 
@@ -106,7 +117,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 					AppReq ar = new AppReq(appType[app]
 							, appType[app], ipv4.getSourceAddress(), ipv4.getDestinationAddress(),
 							DatapathId.of(5L), DatapathId.of(6L),
-							OFPort.of(1), OFPort.of(1), tcp.getSourcePort(), tcp.getDestinationPort(), 1, 50, 2, 60);
+							OFPort.of(1), OFPort.of(1), tcp.getSourcePort(), tcp.getDestinationPort(), 1, 50, adaptationRate, 60);
 					appReqService.addAppReq(AppReqPusher.TABLE_NAME, ar);
 					log.info("appReq {} adicionada em SimulateNodes {}", i+(1000*j), ar.toString());
 
@@ -285,11 +296,13 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 
 	    log.info("Starting AutoManIoT...");
 	    
-		scheduledFutureMap.put("simulationNodes", threadPool.schedule(new SimulateNodes(), 100, TimeUnit.SECONDS));
-
-	    
 	    
 	    int adaptationRate = 2;
+	    
+	    //SimulateNodes sn = new SimulateNodes(3000, 1000, adaptationRate);
+		//scheduledFutureMap.put("simulationNodes", threadPool.schedule(sn, 100, TimeUnit.SECONDS));
+
+	   
 	    
 	    TopicReq tr = new TopicReq("Temperature", 1, adaptationRate, 10, 100, 60);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);

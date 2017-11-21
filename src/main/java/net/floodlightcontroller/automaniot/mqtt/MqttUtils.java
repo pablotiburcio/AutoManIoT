@@ -171,9 +171,11 @@ public class MqttUtils {
 			IPv4 ipv4 = (IPv4) eth.getPayload();
 			if (ipv4.getProtocol() == IpProtocol.TCP){
 				TCP tcp = (TCP) ipv4.getPayload();
-				return	true;//(tcp.getSourcePort().equals(TransportPort.of(1883))
-						//|| tcp.getDestinationPort().equals(TransportPort.of(1883)));
+				if (tcp.getSourcePort().equals(TransportPort.of(1883))
+						|| tcp.getDestinationPort().equals(TransportPort.of(1883))) {
+					return	true;
 				}
+			}
 		}
 		return false;
 	}
