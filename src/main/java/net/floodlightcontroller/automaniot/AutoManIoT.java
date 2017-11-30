@@ -296,7 +296,6 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 
 	    log.info("Starting AutoManIoT...");
 	    
-	    
 	    int adaptationRate = 1;
 	    
 	    //SimulateNodes sn = new SimulateNodes(3000, 1000, adaptationRate);
