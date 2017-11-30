@@ -302,8 +302,6 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	    //SimulateNodes sn = new SimulateNodes(3000, 1000, adaptationRate);
 		//scheduledFutureMap.put("simulationNodes", threadPool.schedule(sn, 100, TimeUnit.SECONDS));
 
-	   
-	    
 	    TopicReq tr = new TopicReq("Temperature", 1, adaptationRate, 10, 100, 60);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 		tr = new TopicReq("Luximeter", 1, adaptationRate, 10, 100, 60);
