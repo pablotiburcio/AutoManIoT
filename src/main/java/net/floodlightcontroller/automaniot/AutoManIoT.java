@@ -294,6 +294,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 
 	    //linkDiscoveryService.
 
+		
 	    log.info("Starting AutoManIoT...");
 	    
 	    int adaptationRate = 1;
