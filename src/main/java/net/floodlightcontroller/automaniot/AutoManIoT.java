@@ -335,10 +335,10 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	public net.floodlightcontroller.core.IListener.Command receive(IOFSwitch sw, OFMessage msg,
 			FloodlightContext cntx) {
 		
-		OFPacketIn packetIn = (OFPacketIn) msg;
+		//OFPacketIn packetIn = (OFPacketIn) msg;
 
 
-		log.info("Mensagem {} Recebida em automaniot{}", i++,msg);
+		//log.info("Mensagem {} Recebida em automaniot{}", i++,msg);
 		//log.info("Porta de origem {}", packetIn.getInPort());
 		//Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
 		//log.info("Eth src {}, dst {}", eth.getSourceMACAddress(), eth.getDestinationMACAddress());
