@@ -72,6 +72,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	protected static Logger logger;
 	protected Map<String, ScheduledFuture<?>> scheduledFutureMap;
 	protected ScheduledThreadPoolExecutor threadPool;
+	public int i=0;
 	
 	class SimulateNodes implements Runnable {
 		int nnodesToSimulate;
@@ -337,7 +338,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 		OFPacketIn packetIn = (OFPacketIn) msg;
 
 
-		//log.info("Mensagem Recebida em automaniot{}", msg);
+		log.info("Mensagem {} Recebida em automaniot{}", i++,msg);
 		//log.info("Porta de origem {}", packetIn.getInPort());
 		Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
 		//log.info("Eth src {}, dst {}", eth.getSourceMACAddress(), eth.getDestinationMACAddress());
