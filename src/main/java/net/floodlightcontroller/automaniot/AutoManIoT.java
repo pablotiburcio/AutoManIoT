@@ -299,7 +299,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	    log.info("Starting AutoManIoT...");
 	    
 	    
-	    int adaptationRate = 2;
+	    int adaptationRate = 1;
 	    
 	    //SimulateNodes sn = new SimulateNodes(3000, 1000, adaptationRate);
 		//scheduledFutureMap.put("simulationNodes", threadPool.schedule(sn, 100, TimeUnit.SECONDS));
