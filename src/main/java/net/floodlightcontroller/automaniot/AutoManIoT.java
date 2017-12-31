@@ -303,11 +303,27 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	    
 	    //SimulateNodes sn = new SimulateNodes(3000, 1000, adaptationRate);
 		//scheduledFutureMap.put("simulationNodes", threadPool.schedule(sn, 100, TimeUnit.SECONDS));
-
-	    TopicReq tr = new TopicReq("Temperature", 1, adaptationRate, 10, 100, 60);
+	    
+	    TopicReq tr = new TopicReq("BloodPressure", 1, adaptationRate, 750, 750, 60);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
+		
+		tr = new TopicReq("DrugDelivery", 1, adaptationRate, 250, 250, 60);
+		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);	
+		
+		tr = new TopicReq("ECG", 1, adaptationRate, 250, 250, 60);
+		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
+		
+		tr = new TopicReq("EndoscopeImaging", 1, adaptationRate, 250, 250, 60);
+		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
+		
+		tr = new TopicReq("RespiratoryRate", 1, adaptationRate, 600, 600, 60);
+		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
+		
+		/*
+		tr = new TopicReq("Temperature", 1, adaptationRate, 10, 100, 60);
+		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);	
 		tr = new TopicReq("Luximeter", 1, adaptationRate, 10, 100, 60);
-		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
+		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);	
 		tr = new TopicReq("AirMonitoring", 1, adaptationRate, 10, 100, 60);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 		tr = new TopicReq("NoiseMonitoring	", 1, adaptationRate, 10, 100, 60);
@@ -318,7 +334,7 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 		tr = new TopicReq("CarPresence", 1, adaptationRate, 10, 100, 60);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
-		
+		*/
 		//tr = new TopicReq("healthcare", 1, 1, 10, 100, 10);
 		//topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 
