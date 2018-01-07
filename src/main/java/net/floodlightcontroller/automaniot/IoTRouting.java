@@ -1428,6 +1428,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 				boolean result = pushRoute(newPath, appReq);
 				if (result) {
 					log.info("rota aplicada para {}", appReq.getName());
+					log.info("rota aplicada {}", newPath.getPath());
 					return true;
 				}
 										
