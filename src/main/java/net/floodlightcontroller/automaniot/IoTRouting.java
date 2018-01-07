@@ -1428,13 +1428,13 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 				boolean result = pushRoute(newPath, appReq);
 				if (result) {
 					log.info("rota aplicada para {}", appReq.getName());
-					log.info("rota aplicada {}", newPath.getPath());
+					log.info("rota aplicada {}, latency {}", newPath.getPath(), newPath.getLatency().getValue());
 					return true;
 				}						
 			} else {
 				//TODO: ALERTA
 				log.info("ALERT: There are no lower delay path/route to {}", appReq.getName());
-				log.info("rota com delay acima do permitido {}", newPath.getPath()); 
+				log.info("rota com delay acima do permitido {}, latency {}", newPath.getPath(), newPath.getLatency().getValue()); 
 				return false;
 			}
 			
