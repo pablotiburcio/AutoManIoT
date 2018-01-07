@@ -1434,7 +1434,7 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 			} else {
 				//TODO: ALERTA
 				log.info("ALERT: There are no lower delay path/route to {}", appReq.getName());
-				log.info("rota com delay acima do permitido {}", newPath.getPath());
+				log.info("rota com delay acima do permitido {}", newPath.getPath()); 
 				return false;
 			}
 			
