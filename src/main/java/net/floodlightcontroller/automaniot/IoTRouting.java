@@ -1585,6 +1585,8 @@ public class IoTRouting implements IOFIoTRouting, IFloodlightModule, IOFMessageL
 									log.info("Found topic, but switches IPs unknown!!!");
 								}
 						
+							} else {
+								log.info("Do not contains topic ", topic);
 							}
 													
 							//Se nao ha o topico na lista, prosseguir encaminhamento convencional
