@@ -304,19 +304,19 @@ public class AutoManIoT implements IOFMessageListener, IFloodlightModule, IStora
 	    //SimulateNodes sn = new SimulateNodes(3000, 1000, adaptationRate);
 		//scheduledFutureMap.put("simulationNodes", threadPool.schedule(sn, 100, TimeUnit.SECONDS));
 	    
-	    TopicReq tr = new TopicReq("BloodPressure", 1, adaptationRate, 750, 750, 60);
+	    TopicReq tr = new TopicReq("BloodPressure", 1, adaptationRate, 750, 750, 10);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 		
-		tr = new TopicReq("DrugDelivery", 1, adaptationRate, 250, 250, 60);
+		tr = new TopicReq("DrugDelivery", 1, adaptationRate, 250, 250, 10);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);	
 		
-		tr = new TopicReq("ECG", 1, adaptationRate, 250, 250, 60);
+		tr = new TopicReq("ECG", 1, adaptationRate, 250, 250, 5);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 		
-		tr = new TopicReq("EndoscopeImaging", 1, adaptationRate, 250, 250, 60);
+		tr = new TopicReq("EndoscopeImaging", 1, adaptationRate, 250, 250, 10);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 		
-		tr = new TopicReq("RespiratoryRate", 1, adaptationRate, 600, 600, 60);
+		tr = new TopicReq("RespiratoryRate", 1, adaptationRate, 600, 600, 10);
 		topicReqService.addTopicReq(TopicReqPusher.TABLE_NAME, tr);
 		
 		/*
